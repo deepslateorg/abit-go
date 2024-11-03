@@ -8,17 +8,17 @@ import (
 )
 
 type ABITObject struct {
-	Type    uint8
-	Blob    *([]byte)
-	String  *string
-	Tree    map[string](*ABITObject)
-	Bool    bool
-	Integer int64
-	Array   *ABITArray
+	dataType uint8
+	blob     *([]byte)
+	text     *string
+	tree     map[string](*ABITObject)
+	boolean  bool
+	integer  int64
+	array    *ABITArray
 }
 
 type ABITArray struct {
-	Array [](*ABITObject)
+	array [](*ABITObject)
 }
 
 type Null struct{}
@@ -32,8 +32,8 @@ func NewABITObject(document *[]byte) (*ABITObject, error) {
 		return &([]ABITObject{tree}[0]), nil
 	} else {
 		tree := ABITObject{
-			Type: 0b0110,
-			Tree: map[string]*ABITObject{},
+			dataType: 0b0110,
+			tree:     map[string]*ABITObject{},
 		}
 		return &([]ABITObject{tree}[0]), nil
 	}
@@ -46,48 +46,48 @@ func NewABITArray() *ABITArray {
 
 func (t *ABITObject) Put(key string, value interface{}) error {
 	// Must be tree type to put an object
-	if t.Type != 0b0110 {
+	if t.dataType != 0b0110 {
 		return fmt.Errorf("ABITObject is invalid type")
 	}
 	switch b := value.(type) {
 	case Null:
 		o := &ABITObject{
-			Type: 0b0000,
+			dataType: 0b0000,
 		}
-		t.Tree[key] = o
+		t.tree[key] = o
 	case bool:
 		o := &ABITObject{
-			Type: 0b0001,
-			Bool: b,
+			dataType: 0b0001,
+			boolean:  b,
 		}
-		t.Tree[key] = o
+		t.tree[key] = o
 	case int64:
 		o := &ABITObject{
-			Type:    0b0010,
-			Integer: b,
+			dataType: 0b0010,
+			integer:  b,
 		}
-		t.Tree[key] = o
+		t.tree[key] = o
 	case []byte:
 		o := &ABITObject{
-			Type: 0b0011,
-			Blob: &b,
+			dataType: 0b0011,
+			blob:     &b,
 		}
-		t.Tree[key] = o
+		t.tree[key] = o
 	case string:
 		o := &ABITObject{
-			Type:   0b0100,
-			String: &b,
+			dataType: 0b0100,
+			text:     &b,
 		}
-		t.Tree[key] = o
+		t.tree[key] = o
 	case ABITArray:
 		o := &ABITObject{
-			Type:  0b0101,
-			Array: &b,
+			dataType: 0b0101,
+			array:    &b,
 		}
-		t.Tree[key] = o
+		t.tree[key] = o
 	case ABITObject:
-		if b.Type == 0b0110 {
-			t.Tree[key] = &b
+		if b.dataType == 0b0110 {
+			t.tree[key] = &b
 		} else {
 			return fmt.Errorf("ABITObject is invalid type")
 		}
@@ -101,24 +101,24 @@ func (a *ABITArray) Add(value interface{}) error {
 	o := &ABITObject{}
 	switch b := value.(type) {
 	case Null:
-		o.Type = 0b0000
+		o.dataType = 0b0000
 	case bool:
-		o.Type = 0b0001
-		o.Bool = b
+		o.dataType = 0b0001
+		o.boolean = b
 	case int64:
-		o.Type = 0b0010
-		o.Integer = b
+		o.dataType = 0b0010
+		o.integer = b
 	case []byte:
-		o.Type = 0b0011
-		o.Blob = &b
+		o.dataType = 0b0011
+		o.blob = &b
 	case string:
-		o.Type = 0b0100
-		o.String = &b
+		o.dataType = 0b0100
+		o.text = &b
 	case ABITArray:
-		o.Type = 0b0101
-		o.Array = &b
+		o.dataType = 0b0101
+		o.array = &b
 	case ABITObject:
-		if b.Type == 0b0110 {
+		if b.dataType == 0b0110 {
 			o = &b
 		} else {
 			return fmt.Errorf("ABITObject is not a valid type")
@@ -126,39 +126,39 @@ func (a *ABITArray) Add(value interface{}) error {
 	default:
 		return fmt.Errorf("unsupported type")
 	}
-	a.Array = append(a.Array, o)
+	a.array = append(a.array, o)
 	return nil
 }
 
 func (t *ABITObject) Remove(key string) {
-	delete(t.Tree, key)
+	delete(t.tree, key)
 }
 
 func (a *ABITArray) Remove(index int64) {
 	ret := make([](*ABITObject), 0)
-	ret = append(ret, (a.Array)[:index]...)
-	a.Array = append(ret, (a.Array)[index+1:]...)
+	ret = append(ret, (a.array)[:index]...)
+	a.array = append(ret, (a.array)[index+1:]...)
 }
 
 func (t *ABITObject) get(key string) (interface{}, error) {
 	// Must be tree type to get an object
-	if t.Type != 0b0110 {
+	if t.dataType != 0b0110 {
 		return 0, fmt.Errorf("ABITObject is not of type tree")
 	}
-	o := t.Tree[key]
-	switch o.Type {
+	o := t.tree[key]
+	switch o.dataType {
 	case 0b0000:
 		return Null{}, nil
 	case 0b0001:
-		return o.Bool, nil
+		return o.boolean, nil
 	case 0b0010:
-		return o.Integer, nil
+		return o.integer, nil
 	case 0b0011:
-		return o.Blob, nil
+		return o.blob, nil
 	case 0b0100:
-		return o.String, nil
+		return o.text, nil
 	case 0b0101:
-		return o.Array, nil
+		return o.array, nil
 	case 0b0110:
 		return o, nil
 	default:
@@ -322,20 +322,20 @@ func encodeString(value *string) *[]byte {
 
 func encodeArray(value *ABITArray) (*[]byte, error) {
 	var buffer bytes.Buffer
-	for _, obj := range value.Array {
-		switch obj.Type {
+	for _, obj := range value.array {
+		switch obj.dataType {
 		case 0b0000:
 			buffer.Write(*encodeNull())
 		case 0b0001:
-			buffer.Write(*encodeBoolean(obj.Bool))
+			buffer.Write(*encodeBoolean(obj.boolean))
 		case 0b0010:
-			buffer.Write(*encodeInteger(obj.Integer, 0b0010))
+			buffer.Write(*encodeInteger(obj.integer, 0b0010))
 		case 0b0011:
-			buffer.Write(*encodeBlob(obj.Blob, 0b0011))
+			buffer.Write(*encodeBlob(obj.blob, 0b0011))
 		case 0b0100:
-			buffer.Write(*encodeString(obj.String))
+			buffer.Write(*encodeString(obj.text))
 		case 0b0101:
-			p, err := encodeArray(obj.Array)
+			p, err := encodeArray(obj.array)
 			if err != nil {
 				return nil, err
 			}
@@ -355,8 +355,8 @@ func encodeArray(value *ABITArray) (*[]byte, error) {
 }
 
 func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
-	keys := make([]string, 0, len(value.Tree))
-	for k := range value.Tree {
+	keys := make([]string, 0, len(value.tree))
+	for k := range value.tree {
 		keys = append(keys, k)
 	}
 
@@ -376,20 +376,20 @@ func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
 			return nil, err
 		}
 		buffer.Write(*p)
-		obj := value.Tree[key]
-		switch obj.Type {
+		obj := value.tree[key]
+		switch obj.dataType {
 		case 0b0000:
 			buffer.Write(*encodeNull())
 		case 0b0001:
-			buffer.Write(*encodeBoolean(obj.Bool))
+			buffer.Write(*encodeBoolean(obj.boolean))
 		case 0b0010:
-			buffer.Write(*encodeInteger(obj.Integer, 0b0010))
+			buffer.Write(*encodeInteger(obj.integer, 0b0010))
 		case 0b0011:
-			buffer.Write(*encodeBlob(obj.Blob, 0b0011))
+			buffer.Write(*encodeBlob(obj.blob, 0b0011))
 		case 0b0100:
-			buffer.Write(*encodeString(obj.String))
+			buffer.Write(*encodeString(obj.text))
 		case 0b0101:
-			p, err := encodeArray(obj.Array)
+			p, err := encodeArray(obj.array)
 			if err != nil {
 				return nil, err
 			}
@@ -503,8 +503,8 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &ABITObject{
-				Type: 0,
+			arr.array = append(arr.array, &ABITObject{
+				dataType: 0,
 			})
 		case 0b0001:
 			var b bool
@@ -512,9 +512,9 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &ABITObject{
-				Type: 1,
-				Bool: b,
+			arr.array = append(arr.array, &ABITObject{
+				dataType: 1,
+				boolean:  b,
 			})
 		case 0b0010:
 			var b int64
@@ -522,9 +522,9 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &ABITObject{
-				Type:    2,
-				Integer: b,
+			arr.array = append(arr.array, &ABITObject{
+				dataType: 2,
+				integer:  b,
 			})
 		case 0b0011:
 			var b []byte
@@ -532,9 +532,9 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &ABITObject{
-				Type: 3,
-				Blob: &([]([]byte){b}[0]),
+			arr.array = append(arr.array, &ABITObject{
+				dataType: 3,
+				blob:     &([]([]byte){b}[0]),
 			})
 		case 0b0100:
 			var b string
@@ -542,9 +542,9 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &ABITObject{
-				Type:   4,
-				String: &([]string{b}[0]),
+			arr.array = append(arr.array, &ABITObject{
+				dataType: 4,
+				text:     &([]string{b}[0]),
 			})
 		case 0b0101:
 			var b ABITArray
@@ -552,9 +552,9 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &ABITObject{
-				Type:  5,
-				Array: &([]ABITArray{b}[0]),
+			arr.array = append(arr.array, &ABITObject{
+				dataType: 5,
+				array:    &([]ABITArray{b}[0]),
 			})
 		case 0b0110:
 			var b ABITObject
@@ -562,7 +562,7 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 			if err != nil {
 				return arr, 0, err
 			}
-			arr.Array = append(arr.Array, &([]ABITObject{b}[0]))
+			arr.array = append(arr.array, &([]ABITObject{b}[0]))
 		default:
 			return arr, 0, fmt.Errorf("invalid type")
 		}
@@ -584,8 +584,8 @@ func keyCompare(a, b string) bool {
 
 func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, error) {
 	tree := ABITObject{
-		Type: 6,
-		Tree: map[string]*ABITObject{},
+		dataType: 6,
+		tree:     map[string]*ABITObject{},
 	}
 
 	var treeBlob []byte
@@ -619,8 +619,8 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &ABITObject{
-				Type: 0,
+			tree.tree[key] = &ABITObject{
+				dataType: 0,
 			}
 		case 0b0001:
 			var b bool
@@ -628,9 +628,9 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &ABITObject{
-				Type: 1,
-				Bool: b,
+			tree.tree[key] = &ABITObject{
+				dataType: 1,
+				boolean:  b,
 			}
 		case 0b0010:
 			var b int64
@@ -638,9 +638,9 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &ABITObject{
-				Type:    2,
-				Integer: b,
+			tree.tree[key] = &ABITObject{
+				dataType: 2,
+				integer:  b,
 			}
 		case 0b0011:
 			var b []byte
@@ -648,9 +648,9 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &ABITObject{
-				Type: 3,
-				Blob: &([]([]byte){b}[0]),
+			tree.tree[key] = &ABITObject{
+				dataType: 3,
+				blob:     &([]([]byte){b}[0]),
 			}
 		case 0b0100:
 			var b string
@@ -658,9 +658,9 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &ABITObject{
-				Type:   4,
-				String: &([]string{b}[0]),
+			tree.tree[key] = &ABITObject{
+				dataType: 4,
+				text:     &([]string{b}[0]),
 			}
 		case 0b0101:
 			var b ABITArray
@@ -668,9 +668,9 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &ABITObject{
-				Type:  5,
-				Array: &([]ABITArray{b}[0]),
+			tree.tree[key] = &ABITObject{
+				dataType: 5,
+				array:    &([]ABITArray{b}[0]),
 			}
 		case 0b0110:
 			var b ABITObject
@@ -678,7 +678,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			if err != nil {
 				return tree, 0, err
 			}
-			tree.Tree[key] = &([]ABITObject{b}[0])
+			tree.tree[key] = &([]ABITObject{b}[0])
 		default:
 			return tree, 0, fmt.Errorf("invalid type")
 		}
