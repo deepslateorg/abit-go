@@ -49,6 +49,9 @@ func (t *ABITObject) Put(key string, value interface{}) error {
 	if t.dataType != 0b0110 {
 		return fmt.Errorf("ABITObject is invalid type")
 	}
+	if len([]byte(key)) > 256 || 0 >= len([]byte(key)) {
+		return fmt.Errorf("key too long")
+	}
 	switch b := value.(type) {
 	case Null:
 		o := &ABITObject{
@@ -418,12 +421,21 @@ func (t *ABITObject) ToByteArray() ([]byte, error) {
 }
 
 func decodeKey(blob *[]byte, offset int64) (string, int64, error) {
-	keyLength := int64((*blob)[offset] + 1)
-	return string((*blob)[offset : offset+int64(keyLength)]), offset + 1 + keyLength, nil
+	if offset < 0 || int(offset) >= len(*blob) {
+		return "", 0, fmt.Errorf("key out of bounds")
+	}
+	keyLength := int64((*blob)[offset]) + 1
+	if int(offset+1+keyLength) > len(*blob) {
+		return "", 0, fmt.Errorf("key out of bounds")
+	}
+	return string((*blob)[offset+1 : offset+1+keyLength]), offset + 1 + keyLength, nil
 }
 
-func decodeType(blob *[]byte, offset int64) uint8 {
-	return (*blob)[offset] & 0x0f
+func decodeType(blob *[]byte, offset int64) (uint8, error) {
+	if offset < 0 || int(offset) >= len(*blob) {
+		return 0, fmt.Errorf("type exceeds blob")
+	}
+	return (*blob)[offset] & 0x0f, nil
 }
 
 func decodeNull(blob *[]byte, offset int64) (int64, error) {
@@ -444,13 +456,19 @@ func decodeBoolean(blob *[]byte, offset int64) (bool, int64, error) {
 }
 
 func decodeInteger(blob *[]byte, offset int64, maxSize int) (int64, int64, error) {
+	if int(offset) >= len(*blob) {
+		return 0, 0, fmt.Errorf("integer is out of bounds")
+	}
 	intSize := ((*blob)[offset] >> 4) + 1
 	if maxSize < int(intSize) {
-		return 0, 0, fmt.Errorf("integer is too big")
+		return 0, 0, fmt.Errorf("integer is too big at %d", offset)
+	}
+	if int(offset+1+int64(intSize)) > len(*blob) {
+		return 0, 0, fmt.Errorf("integer is out of bounds")
 	}
 
 	extended := make([]byte, 8)
-	copy(extended, (*blob)[offset+1:])
+	copy(extended, (*blob)[offset+1:offset+1+int64(intSize)])
 
 	// If the sign bit (most significant bit of the original byte slice) is set, perform sign-extension
 	if (*blob)[offset+1+int64(intSize)-1]&0x80 != 0 {
@@ -480,6 +498,9 @@ func decodeBlob(blob *[]byte, offset int64) ([]byte, int64, error) {
 	if blobLength < 0 {
 		return nil, 0, fmt.Errorf("negative length for blob")
 	}
+	if len(*blob) < int(offset+blobLength) {
+		return nil, 0, fmt.Errorf("length for blob exceeds the blob")
+	}
 	var buf []byte = (*blob)[offset : offset+blobLength]
 	return buf, offset + blobLength, nil
 }
@@ -497,7 +518,11 @@ func decodeArray(blob *[]byte, offset int64) (ABITArray, int64, error) {
 	}
 	var index int64 = 0
 	for int(index) < len(arrBlob) {
-		switch decodeType(&arrBlob, index) {
+		typ, err := decodeType(&arrBlob, index)
+		if err != nil {
+			return arr, 0, err
+		}
+		switch typ {
 		case 0b0000:
 			index, err = decodeNull(&arrBlob, index)
 			if err != nil {
@@ -588,34 +613,39 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 		tree:     map[string]*ABITObject{},
 	}
 
-	var treeBlob []byte
 	var err error
+	var index int64 = 0
 	if nested {
-		treeBlob, offset, err = decodeBlob(blob, offset)
+		index = offset
+		var treeSize int64
+		treeSize, index, err = decodeInteger(blob, offset, 4)
+		offset = index + treeSize
 		if err != nil {
 			return tree, 0, err
 		}
 	} else {
-		treeBlob = *blob
-		offset = int64(len(*blob) - 1)
+		offset = int64(len(*blob))
 	}
 
-	var key, lastKey string
-	var index int64 = 0
-	for int(index) < len(treeBlob) {
-		key, index, err = decodeKey(&treeBlob, index)
+	var key, lastKey string = "", ""
+	for index < offset {
+		key, index, err = decodeKey(blob, index)
 		if err != nil {
 			return tree, 0, err
 		}
 
 		if !keyCompare(lastKey, key) {
-			return tree, 0, fmt.Errorf("invalid key order")
+			return tree, 0, fmt.Errorf("invalid key order: (%d)->(%d), %s -> %s", len(lastKey), len(key), lastKey, key)
 		}
 		lastKey = key
 
-		switch decodeType(&treeBlob, index) {
+		typ, err := decodeType(blob, index)
+		if err != nil {
+			return tree, 0, err
+		}
+		switch typ {
 		case 0b0000:
-			index, err = decodeNull(&treeBlob, index)
+			index, err = decodeNull(blob, index)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -624,7 +654,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			}
 		case 0b0001:
 			var b bool
-			b, index, err = decodeBoolean(&treeBlob, index)
+			b, index, err = decodeBoolean(blob, index)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -634,7 +664,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			}
 		case 0b0010:
 			var b int64
-			b, index, err = decodeInteger(&treeBlob, index, 8)
+			b, index, err = decodeInteger(blob, index, 8)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -644,7 +674,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			}
 		case 0b0011:
 			var b []byte
-			b, index, err = decodeBlob(&treeBlob, index)
+			b, index, err = decodeBlob(blob, index)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -654,7 +684,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			}
 		case 0b0100:
 			var b string
-			b, index, err = decodeString(&treeBlob, index)
+			b, index, err = decodeString(blob, index)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -664,7 +694,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			}
 		case 0b0101:
 			var b ABITArray
-			b, index, err = decodeArray(&treeBlob, index)
+			b, index, err = decodeArray(blob, index)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -674,7 +704,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			}
 		case 0b0110:
 			var b ABITObject
-			b, index, err = decodeTree(&treeBlob, index, true)
+			b, index, err = decodeTree(blob, index, true)
 			if err != nil {
 				return tree, 0, err
 			}
@@ -683,7 +713,7 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 			return tree, 0, fmt.Errorf("invalid type")
 		}
 	}
-	if int(index) > len(treeBlob) {
+	if int(index) > len(*blob) {
 		return tree, 0, fmt.Errorf("corrupt array")
 	}
 	return tree, offset, nil
