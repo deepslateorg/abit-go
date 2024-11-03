@@ -2,7 +2,6 @@ package abit
 
 import (
 	"bytes"
-	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
@@ -445,8 +444,7 @@ func TestInvalidTree(t *testing.T) {
 		obj := randBytes(rand.Int63n(256) + 512)
 		_, err := NewABITObject(&obj)
 		if err == nil {
-			fmt.Println("Hit a valid tree, wack")
-			//t.Fatal("this tree should be invalid")
+			t.Fatal("this tree should be invalid, try rerunning test if this happens")
 		}
 	}
 }
