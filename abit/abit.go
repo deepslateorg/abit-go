@@ -439,6 +439,9 @@ func decodeType(blob *[]byte, offset int64) (uint8, error) {
 }
 
 func decodeNull(blob *[]byte, offset int64) (int64, error) {
+	if offset < 0 || int(offset) >= len(*blob) {
+		return 0, fmt.Errorf("null exceeds blob")
+	}
 	if (*blob)[offset] != 0x00 {
 		return 0, fmt.Errorf("byte is not null")
 	}
@@ -446,6 +449,9 @@ func decodeNull(blob *[]byte, offset int64) (int64, error) {
 }
 
 func decodeBoolean(blob *[]byte, offset int64) (bool, int64, error) {
+	if offset < 0 || int(offset) >= len(*blob) {
+		return false, 0, fmt.Errorf("bool exceeds blob")
+	}
 	switch (*blob)[offset] {
 	case 0b00010001:
 		return true, offset + 1, nil
@@ -456,8 +462,8 @@ func decodeBoolean(blob *[]byte, offset int64) (bool, int64, error) {
 }
 
 func decodeInteger(blob *[]byte, offset int64, maxSize int) (int64, int64, error) {
-	if int(offset) >= len(*blob) {
-		return 0, 0, fmt.Errorf("integer is out of bounds")
+	if offset < 0 || int(offset) >= len(*blob) {
+		return 0, 0, fmt.Errorf("integer exceeds blob")
 	}
 	intSize := ((*blob)[offset] >> 4) + 1
 	if maxSize < int(intSize) {
