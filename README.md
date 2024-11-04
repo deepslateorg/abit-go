@@ -7,7 +7,7 @@ arr := NewABITArray()
 arr.Add("päror")
 
 // add integer to array
-arr.Add(46410)
+arr.Add(int64(46410))
 
 // create an empty tree
 tree, _ := NewABITObject(&[]byte{})
