@@ -491,6 +491,14 @@ func TestGenericArray(t *testing.T) {
 	if i1 != i2 {
 		t.Fatalf("integers not equal: %d <-> %d", i1, i2)
 	}
+
+	if arr2.Length() != 7 {
+		t.Fatalf("array is not expected length")
+	}
+
+	if tree.Keys()[0] != "array obj" {
+		t.Fatalf("tree not containing expected key")
+	}
 }
 
 func TestInvalidTree(t *testing.T) {
