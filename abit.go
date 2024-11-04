@@ -350,10 +350,10 @@ func (t *ABITObject) GetTree(key string) (*ABITObject, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a tree")
 }
 
-// GetNull fetches abit.Null object from value at key.
+// GetNull fetches abit.Null object from value at index.
 //
 //	Returns abit.Null
-//	Returns error if value associated with key is not a null
+//	Returns error if value at index is not a null
 func (a *ABITArray) GetNull(index int64) (Null, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -366,10 +366,10 @@ func (a *ABITArray) GetNull(index int64) (Null, error) {
 	return Null{}, fmt.Errorf("object trying to be fetched is not a null")
 }
 
-// GetBool fetches bool object from value at key.
+// GetBool fetches bool object from value at index.
 //
 //	Returns bool
-//	Returns error if value associated with key is not a bool
+//	Returns error if value at index is not a bool
 func (a *ABITArray) GetBool(index int64) (bool, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -382,10 +382,10 @@ func (a *ABITArray) GetBool(index int64) (bool, error) {
 	return false, fmt.Errorf("object trying to be fetched is not a boolean")
 }
 
-// GetInteger fetches integer object from value at key.
+// GetInteger fetches integer object from value at index.
 //
 //	Returns int64
-//	Returns error if value associated with key is not an integer
+//	Returns error if value at index is not an integer
 func (a *ABITArray) GetInteger(index int64) (int64, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -398,10 +398,10 @@ func (a *ABITArray) GetInteger(index int64) (int64, error) {
 	return 0, fmt.Errorf("object trying to be fetched is not an integer")
 }
 
-// GetBlob fetches blob object from value at key.
+// GetBlob fetches blob object from value at index.
 //
 //	Returns *[]byte
-//	Returns error if value associated with key is not a blob
+//	Returns error if value at index is not a blob
 func (a *ABITArray) GetBlob(index int64) (*[]byte, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -414,10 +414,10 @@ func (a *ABITArray) GetBlob(index int64) (*[]byte, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a blob")
 }
 
-// GetString fetches string object from value at key.
+// GetString fetches string object from value at index.
 //
 //	Returns *string
-//	Returns error if value associated with key is not a string
+//	Returns error if value at index is not a string
 func (a *ABITArray) GetString(index int64) (*string, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -430,10 +430,10 @@ func (a *ABITArray) GetString(index int64) (*string, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a string")
 }
 
-// GetArray fetches array object from value at key.
+// GetArray fetches array object from value at index.
 //
 //	Returns *ABITArray
-//	Returns error if value associated with key is not an array
+//	Returns error if value at index is not an array
 func (a *ABITArray) GetArray(index int64) (*ABITArray, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -446,10 +446,10 @@ func (a *ABITArray) GetArray(index int64) (*ABITArray, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not an array")
 }
 
-// GetTree fetches tree object from value at key.
+// GetTree fetches tree object from value at index.
 //
 //	Returns *ABITObject
-//	Returns error if value associated with key is not a tree
+//	Returns error if value at index is not a tree
 func (a *ABITArray) GetTree(index int64) (*ABITObject, error) {
 	obj, err := a.get(index)
 	if err != nil {
