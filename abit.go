@@ -1,3 +1,4 @@
+// Package abit implements abit documents into go.
 package abit
 
 import (
