@@ -149,6 +149,27 @@ func (a *ABITArray) Add(value interface{}) error {
 	return nil
 }
 
+// Keys gets all the keys in a tree.
+//
+//	Returns []string containing all keys present in the tree
+func (t *ABITObject) Keys() []string {
+	if t.dataType != 0b0110 {
+		panic("the ABITObject is not of correct type")
+	}
+	keys := make([]string, 0, len(t.tree))
+	for k := range t.tree {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Length gets the length of the array.
+//
+//	Returns int being the length of the array
+func (a *ABITArray) Length() int {
+	return len(a.array)
+}
+
 // Remove deletes the key and its associated value from the ABITObject.
 //
 // If the key doesn't exist in the ABITObject, then this acts as a no operation.
