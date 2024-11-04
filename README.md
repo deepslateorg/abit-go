@@ -32,6 +32,19 @@ if err != nil {
     // Handle error TT~~TT
     // invalid document
 }
+
+// get array from tree
+arr2, err := tree2.GetArray("landet")
+if err != nil {
+    // Handle error TT~~TT
+}
+
+// get value from array
+vegetable, err := arr2.GetString(0)
+if err != nil {
+    // Handle error TT~~TT
+    // item at index wasn't string / index out of bounds
+}
 ```
 # Spec
 ### key:

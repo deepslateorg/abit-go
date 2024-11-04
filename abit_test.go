@@ -439,6 +439,60 @@ func TestGenericTree(t *testing.T) {
 	}
 }
 
+func TestGenericArray(t *testing.T) {
+	tree, _ := NewABITObject(&[]byte{})
+	arr := NewABITArray()
+	arr.Add("1")
+	arr.Add(int64(2))
+	arr.Add(true)
+	arr.Add(int64(4))
+	arr.Add(int64(3))
+	arr.Add("2")
+	arr.Add(int64(1))
+	tree.Put("array obj", *arr)
+
+	treeBlob1, _ := tree.ToByteArray()
+
+	tree2, err := NewABITObject(&treeBlob1)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	treeBlob2, _ := tree2.ToByteArray()
+
+	if !bytes.Equal(treeBlob1, treeBlob2) {
+		t.Fatal("abit not equal")
+	}
+
+	arr2, err := tree2.GetArray("array obj")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	s1, err := arr.GetString(0)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	s2, err := arr2.GetString(0)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if *s1 != *s2 {
+		t.Fatalf("strings not equal: %s <-> %s", *s1, *s2)
+	}
+
+	i1, err := arr.GetInteger(1)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	i2, err := arr2.GetInteger(1)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if i1 != i2 {
+		t.Fatalf("integers not equal: %d <-> %d", i1, i2)
+	}
+}
+
 func TestInvalidTree(t *testing.T) {
 	for i := 0; i < 500000; i++ {
 		obj := randBytes(rand.Int63n(256) + 512)
