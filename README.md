@@ -1,3 +1,38 @@
+# How to Use
+```go
+// create an array
+arr := NewABITArray()
+
+// add string to array
+arr.Add("päror")
+
+// add integer to array
+arr.Add(46410)
+
+// create an empty tree
+tree, _ := NewABITObject(&[]byte{})
+
+// add array to tree
+tree.Put("landet", *arr)
+
+// add blob to tree
+blob := []byte{0, 4, 1, 0}
+tree.Put("riktnummer", blob)
+
+// convert ABITObject to an abit binary / document
+doc, err := tree.ToByteArray()
+if err != nil {
+    // Handle error TT~~TT
+    // Something went seriously wrong
+}
+
+// create an ABITObject from an abit document
+tree2, err := NewABITObject(&doc)
+if err != nil {
+    // Handle error TT~~TT
+    // invalid document
+}
+```
 # Spec
 ### key:
 ```

@@ -23,6 +23,10 @@ type ABITArray struct {
 
 type Null struct{}
 
+// NewABITObject Creates an ABIT object from a binary ABIT document.
+//
+//	The document can be empty to initialize an empty ABIT object.
+//	Error returns nil on success or an error if the document is invalid.
 func NewABITObject(document *[]byte) (*ABITObject, error) {
 	if len(*document) > 0 {
 		tree, _, err := decodeTree(document, 0, false)
@@ -39,11 +43,19 @@ func NewABITObject(document *[]byte) (*ABITObject, error) {
 	}
 }
 
+// NewABITArray Initializes an ABIT array.
+//
+//	Returns empty ABITArray
 func NewABITArray() *ABITArray {
 	arr := ABITArray{}
 	return &([]ABITArray{arr}[0])
 }
 
+// Put adds a value to the corresponding key in the ABIT object.
+//
+//	key must be less than or equal to 256 bytes when encoded.
+//	value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
+//	returns error if key is invalid or value if of invalid type.
 func (t *ABITObject) Put(key string, value interface{}) error {
 	// Must be tree type to put an object
 	if t.dataType != 0b0110 {
@@ -100,6 +112,10 @@ func (t *ABITObject) Put(key string, value interface{}) error {
 	return nil
 }
 
+// Add adds a value to the ABITArray.
+//
+//	Value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
+//	Returns error if input value is of invalid type.
 func (a *ABITArray) Add(value interface{}) error {
 	o := &ABITObject{}
 	switch b := value.(type) {
@@ -133,14 +149,24 @@ func (a *ABITArray) Add(value interface{}) error {
 	return nil
 }
 
+// Remove deletes the key and its associated value from the ABITObject.
+//
+// If the key doesn't exist in the ABITObject, then this acts as a no operation.
 func (t *ABITObject) Remove(key string) {
 	delete(t.tree, key)
 }
 
-func (a *ABITArray) Remove(index int64) {
+// Remove deletes the value at index from the ABITArray.
+//
+//	If the index is negative or out of bounds for the array, returns error
+func (a *ABITArray) Remove(index int64) error {
+	if index < 0 || int(index) >= len(a.array) {
+		return fmt.Errorf("index out of bounds")
+	}
 	ret := make([](*ABITObject), 0)
 	ret = append(ret, (a.array)[:index]...)
 	a.array = append(ret, (a.array)[index+1:]...)
+	return nil
 }
 
 func (t *ABITObject) get(key string) (interface{}, error) {
@@ -169,6 +195,10 @@ func (t *ABITObject) get(key string) (interface{}, error) {
 	}
 }
 
+// GetNull fetches abit.Null object from value at key.
+//
+//	Returns abit.Null
+//	Returns error if value associated with key is not a null
 func (t *ABITObject) GetNull(key string) (Null, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -181,6 +211,10 @@ func (t *ABITObject) GetNull(key string) (Null, error) {
 	return Null{}, fmt.Errorf("object trying to be fetched is not a null")
 }
 
+// GetBool fetches bool object from value at key.
+//
+//	Returns bool
+//	Returns error if value associated with key is not a bool
 func (t *ABITObject) GetBool(key string) (bool, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -193,6 +227,10 @@ func (t *ABITObject) GetBool(key string) (bool, error) {
 	return false, fmt.Errorf("object trying to be fetched is not a boolean")
 }
 
+// GetInteger fetches integer object from value at key.
+//
+//	Returns int64
+//	Returns error if value associated with key is not an integer
 func (t *ABITObject) GetInteger(key string) (int64, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -205,6 +243,10 @@ func (t *ABITObject) GetInteger(key string) (int64, error) {
 	return 0, fmt.Errorf("object trying to be fetched is not an integer")
 }
 
+// GetBlob fetches blob object from value at key.
+//
+//	Returns *[]byte
+//	Returns error if value associated with key is not a blob
 func (t *ABITObject) GetBlob(key string) (*[]byte, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -217,6 +259,10 @@ func (t *ABITObject) GetBlob(key string) (*[]byte, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a blob")
 }
 
+// GetString fetches string object from value at key.
+//
+//	Returns *string
+//	Returns error if value associated with key is not a string
 func (t *ABITObject) GetString(key string) (*string, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -229,6 +275,10 @@ func (t *ABITObject) GetString(key string) (*string, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a string")
 }
 
+// GetArray fetches array object from value at key.
+//
+//	Returns *ABITArray
+//	Returns error if value associated with key is not an array
 func (t *ABITObject) GetArray(key string) (*ABITArray, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -241,6 +291,10 @@ func (t *ABITObject) GetArray(key string) (*ABITArray, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not an array")
 }
 
+// GetTree fetches tree object from value at key.
+//
+//	Returns *ABITObject
+//	Returns error if value associated with key is not a tree
 func (t *ABITObject) GetTree(key string) (*ABITObject, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -415,6 +469,10 @@ func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
 	}
 }
 
+// ToByteArray converts the ABITObject to a binary document in abit format.
+//
+//	Returns []byte
+//	Returns error if the tree contains invalid objects.
 func (t *ABITObject) ToByteArray() ([]byte, error) {
 	p, err := encodeTree(t, false)
 	return *p, err
