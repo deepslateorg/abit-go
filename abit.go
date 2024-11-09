@@ -10,6 +10,10 @@ import (
 	"sort"
 )
 
+// ABITObject is used to store ABIT trees.
+//
+//	// Initialize an empty ABITObject
+//	tree, _ := abit.NewABITObject([]byte{})
 type ABITObject struct {
 	dataType uint8
 	blob     *([]byte)
@@ -20,16 +24,38 @@ type ABITObject struct {
 	array    *ABITArray
 }
 
+// ABITArray is used to store ABIT arrays.
+//
+//	// Initialize an empty ABITArray
+//	arr := abit.NewABITArray()
 type ABITArray struct {
 	array [](*ABITObject)
 }
 
+// Null is a helper object to represent null values in abit.
 type Null struct{}
+
+// ABITLexicon stores a schema to see if a given ABITObject matches the schema.
+type ABITLexicon struct {
+	lexicon ABITObject
+}
 
 // NewABITObject Creates an ABIT object from a binary ABIT document.
 //
-//	The document can be empty to initialize an empty ABIT object.
-//	Error returns nil on success or an error if the document is invalid.
+// error is nil on success or an error if the document is invalid.
+//
+// # Example 1
+//
+//	// Initialize an empty ABITObject
+//	tree, _ := abit.NewABITObject([]byte{})
+//
+// # Example 2
+//
+//	// Initialize an ABITObject from a byte slice of unknown validity
+//	tree, err := abit.NewABITObject(doc)
+//	if err == nil {
+//		// Code to handle a valid ABIT Document here
+//	}
 func NewABITObject(document *[]byte) (*ABITObject, error) {
 	if len(*document) > 0 {
 		tree, _, err := decodeTree(document, 0, false)
@@ -46,9 +72,12 @@ func NewABITObject(document *[]byte) (*ABITObject, error) {
 	}
 }
 
-// NewABITArray Initializes an ABIT array.
+// NewABITArray Initializes and returns an empty ABIT array.
 //
-//	Returns empty ABITArray
+// # Example
+//
+//	// Initialize ABITArray
+//	arr := abit.NewABITArray()
 func NewABITArray() *ABITArray {
 	arr := ABITArray{}
 	return &([]ABITArray{arr}[0])
@@ -56,9 +85,11 @@ func NewABITArray() *ABITArray {
 
 // Put adds a value to the corresponding key in the ABIT object.
 //
-//	key must be less than or equal to 256 bytes when encoded.
-//	value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
-//	returns error if key is invalid or value if of invalid type.
+// # Requirements
+//   - key must be less than or equal to 256 bytes when encoded with UTF-8, but also more than or equal to 1 byte.
+//   - value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
+//
+// error if key is invalid or value is of invalid type, otherwise nil.
 func (t *ABITObject) Put(key string, value interface{}) error {
 	// Must be tree type to put an object
 	if t.dataType != 0b0110 {
@@ -117,8 +148,10 @@ func (t *ABITObject) Put(key string, value interface{}) error {
 
 // Add adds a value to the ABITArray.
 //
-//	Value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
-//	Returns error if input value is of invalid type.
+// # Requirements
+//   - Value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
+//
+// error if input value is of invalid type, otherwise nil.
 func (a *ABITArray) Add(value interface{}) error {
 	o := &ABITObject{}
 	switch b := value.(type) {
@@ -154,7 +187,12 @@ func (a *ABITArray) Add(value interface{}) error {
 
 // Keys gets all the keys in a tree.
 //
-//	Returns []string containing all keys present in the tree
+// # Example
+//
+//	keys:= tree.Keys()
+//	for i, key := range keys {
+//		// Code iterating through the tree here.
+//	}
 func (t *ABITObject) Keys() []string {
 	if t.dataType != 0b0110 {
 		panic("the ABITObject is not of correct type")
@@ -166,23 +204,26 @@ func (t *ABITObject) Keys() []string {
 	return keys
 }
 
-// Length gets the length of the array.
+// Length gets the number of objects in the array.
 //
-//	Returns int being the length of the array
+// # Example
+//
+//	for i := 0; i < arr.Length(); i++ {
+//		// Code iterating through the array here.
+//	}
 func (a *ABITArray) Length() int {
 	return len(a.array)
 }
 
-// Remove deletes the key and its associated value from the ABITObject.
-//
-// If the key doesn't exist in the ABITObject, then this acts as a no operation.
+// Remove the key and its associated value from the ABITObject.
 func (t *ABITObject) Remove(key string) {
 	delete(t.tree, key)
 }
 
-// Remove deletes the value at index from the ABITArray.
+// Remove the value at index from the ABITArray.
 //
-//	If the index is negative or out of bounds for the array, returns error
+// # Requirements
+//   - If the index is negative or out of bounds for the array, returns error
 func (a *ABITArray) Remove(index int64) error {
 	if index < 0 || int(index) >= len(a.array) {
 		return fmt.Errorf("index out of bounds")
@@ -241,10 +282,9 @@ func (t *ABITObject) get(key string) (interface{}, error) {
 	}
 }
 
-// GetNull fetches abit.Null object from value at key.
+// GetNull fetches abit.Null assosiated with key.
 //
-//	Returns abit.Null
-//	Returns error if value associated with key is not a null
+// Returns error if value associated with key is not an abit.Null
 func (t *ABITObject) GetNull(key string) (Null, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -257,10 +297,9 @@ func (t *ABITObject) GetNull(key string) (Null, error) {
 	return Null{}, fmt.Errorf("object trying to be fetched is not a null")
 }
 
-// GetBool fetches bool object from value at key.
+// GetBool fetches bool assosiated with key.
 //
-//	Returns bool
-//	Returns error if value associated with key is not a bool
+// Returns error if value associated with key is not a bool
 func (t *ABITObject) GetBool(key string) (bool, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -273,10 +312,9 @@ func (t *ABITObject) GetBool(key string) (bool, error) {
 	return false, fmt.Errorf("object trying to be fetched is not a boolean")
 }
 
-// GetInteger fetches integer object from value at key.
+// GetInteger fetches integer assosiated with key.
 //
-//	Returns int64
-//	Returns error if value associated with key is not an integer
+// Returns error if value associated with key is not an integer
 func (t *ABITObject) GetInteger(key string) (int64, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -289,10 +327,9 @@ func (t *ABITObject) GetInteger(key string) (int64, error) {
 	return 0, fmt.Errorf("object trying to be fetched is not an integer")
 }
 
-// GetBlob fetches blob object from value at key.
+// GetBlob fetches blob assosiated with key.
 //
-//	Returns *[]byte
-//	Returns error if value associated with key is not a blob
+// Returns error if value associated with key is not a blob
 func (t *ABITObject) GetBlob(key string) (*[]byte, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -305,10 +342,9 @@ func (t *ABITObject) GetBlob(key string) (*[]byte, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a blob")
 }
 
-// GetString fetches string object from value at key.
+// GetString fetches string assosiated with key.
 //
-//	Returns *string
-//	Returns error if value associated with key is not a string
+// Returns error if value associated with key is not a string
 func (t *ABITObject) GetString(key string) (*string, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -321,10 +357,9 @@ func (t *ABITObject) GetString(key string) (*string, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a string")
 }
 
-// GetArray fetches array object from value at key.
+// GetArray fetches array assosiated with key.
 //
-//	Returns *ABITArray
-//	Returns error if value associated with key is not an array
+// Returns error if value associated with key is not an array
 func (t *ABITObject) GetArray(key string) (*ABITArray, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -337,10 +372,9 @@ func (t *ABITObject) GetArray(key string) (*ABITArray, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not an array")
 }
 
-// GetTree fetches tree object from value at key.
+// GetTree fetches tree assosiated with key.
 //
-//	Returns *ABITObject
-//	Returns error if value associated with key is not a tree
+// Returns error if value associated with key is not a tree
 func (t *ABITObject) GetTree(key string) (*ABITObject, error) {
 	obj, err := t.get(key)
 	if err != nil {
@@ -353,10 +387,9 @@ func (t *ABITObject) GetTree(key string) (*ABITObject, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a tree")
 }
 
-// GetNull fetches abit.Null object from value at index.
+// GetNull fetches abit.Null at index.
 //
-//	Returns abit.Null
-//	Returns error if value at index is not a null
+// Returns error if value at index is not a null
 func (a *ABITArray) GetNull(index int64) (Null, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -369,10 +402,9 @@ func (a *ABITArray) GetNull(index int64) (Null, error) {
 	return Null{}, fmt.Errorf("object trying to be fetched is not a null")
 }
 
-// GetBool fetches bool object from value at index.
+// GetBool fetches bool at index.
 //
-//	Returns bool
-//	Returns error if value at index is not a bool
+// Returns error if value at index is not a bool
 func (a *ABITArray) GetBool(index int64) (bool, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -385,10 +417,9 @@ func (a *ABITArray) GetBool(index int64) (bool, error) {
 	return false, fmt.Errorf("object trying to be fetched is not a boolean")
 }
 
-// GetInteger fetches integer object from value at index.
+// GetInteger fetches integer at index.
 //
-//	Returns int64
-//	Returns error if value at index is not an integer
+// Returns error if value at index is not an integer
 func (a *ABITArray) GetInteger(index int64) (int64, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -401,10 +432,9 @@ func (a *ABITArray) GetInteger(index int64) (int64, error) {
 	return 0, fmt.Errorf("object trying to be fetched is not an integer")
 }
 
-// GetBlob fetches blob object from value at index.
+// GetBlob fetches blob at index.
 //
-//	Returns *[]byte
-//	Returns error if value at index is not a blob
+// Returns error if value at index is not a blob
 func (a *ABITArray) GetBlob(index int64) (*[]byte, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -417,10 +447,9 @@ func (a *ABITArray) GetBlob(index int64) (*[]byte, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a blob")
 }
 
-// GetString fetches string object from value at index.
+// GetString fetches string at index.
 //
-//	Returns *string
-//	Returns error if value at index is not a string
+// Returns error if value at index is not a string
 func (a *ABITArray) GetString(index int64) (*string, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -433,10 +462,9 @@ func (a *ABITArray) GetString(index int64) (*string, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not a string")
 }
 
-// GetArray fetches array object from value at index.
+// GetArray fetches array at index.
 //
-//	Returns *ABITArray
-//	Returns error if value at index is not an array
+// Returns error if value at index is not an array
 func (a *ABITArray) GetArray(index int64) (*ABITArray, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -449,10 +477,9 @@ func (a *ABITArray) GetArray(index int64) (*ABITArray, error) {
 	return nil, fmt.Errorf("object trying to be fetched is not an array")
 }
 
-// GetTree fetches tree object from value at index.
+// GetTree fetches tree at index.
 //
-//	Returns *ABITObject
-//	Returns error if value at index is not a tree
+// Returns error if value at index is not a tree
 func (a *ABITArray) GetTree(index int64) (*ABITObject, error) {
 	obj, err := a.get(index)
 	if err != nil {
@@ -629,8 +656,7 @@ func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
 
 // ToByteArray converts the ABITObject to a binary document in abit format.
 //
-//	Returns []byte
-//	Returns error if the tree contains invalid objects.
+// Returns error if the tree contains invalid objects.
 func (t *ABITObject) ToByteArray() ([]byte, error) {
 	p, err := encodeTree(t, false)
 	return *p, err
@@ -939,10 +965,6 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 		return tree, 0, fmt.Errorf("corrupt array")
 	}
 	return tree, offset, nil
-}
-
-type ABITLexicon struct {
-	lexicon ABITObject
 }
 
 // InitLexicon creates an ABITLexicon used for seeing if any ABITObject follows the given schema or not.

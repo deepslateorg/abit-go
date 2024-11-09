@@ -1,0 +1,54 @@
+output: "{{.Dir}}/README.md"
+header: |-
+  # Example
+  ```go
+  // create an array
+  arr := NewABITArray()
+
+  // add string to array
+  arr.Add("päror")
+
+  // add integer to array
+  arr.Add(int64(46410))
+
+  // create an empty tree
+  tree, _ := NewABITObject(&[]byte{})
+
+  // add array to tree
+  tree.Put("landet", *arr)
+
+  // add blob to tree
+  blob := []byte{0, 4, 1, 0}
+  tree.Put("riktnummer", blob)
+
+  // convert ABITObject to an abit binary / document
+  doc, err := tree.ToByteArray()
+  if err != nil {
+      // Handle error TT~~TT
+      // Something went seriously wrong
+  }
+
+  // create an ABITObject from an abit document
+  tree2, err := NewABITObject(&doc)
+  if err != nil {
+      // Handle error TT~~TT
+      // invalid document
+  }
+
+  // get array from tree
+  arr2, err := tree2.GetArray("landet")
+  if err != nil {
+      // Handle error TT~~TT
+  }
+
+  // get value from array
+  vegetable, err := arr2.GetString(0)
+  if err != nil {
+      // Handle error TT~~TT
+      // item at index wasn't string / index out of bounds
+  }
+  ```
+repository:
+  url: https://github.com/deepslateorg/abit-go
+  defaultBranch: master
+  path: /
