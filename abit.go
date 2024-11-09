@@ -4,7 +4,9 @@ package abit
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 )
 
@@ -937,4 +939,232 @@ func decodeTree(blob *[]byte, offset int64, nested bool) (ABITObject, int64, err
 		return tree, 0, fmt.Errorf("corrupt array")
 	}
 	return tree, offset, nil
+}
+
+type ABITLexicon struct {
+	lexicon ABITObject
+}
+
+func InitLexicon(lexicon string) ABITLexicon {
+	// Unmarshal JSON into a map
+	var lexiconMap map[string]interface{}
+	err := json.Unmarshal([]byte(lexicon), &lexiconMap)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return ABITLexicon{
+		lexicon: jsonTypeTreeToABIT(lexiconMap),
+	}
+}
+
+func jsonTypeArrayToABIT(lexicon []interface{}) ABITArray {
+	arr := NewABITArray()
+
+	for i := range lexicon {
+		var err error = nil
+		switch t := lexicon[i].(type) {
+		case string:
+			switch t {
+			case "null":
+				err = arr.Add(Null{})
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type null to tree for reason:\n%s", err.Error()))
+				}
+			case "boolean":
+				err = arr.Add(false)
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type boolean to tree for reason:\n%s", err.Error()))
+				}
+			case "integer":
+				err = arr.Add(int64(0))
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type integer to tree for reason:\n%s", err.Error()))
+				}
+			case "blob":
+				err = arr.Add([]byte{})
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type blob to tree for reason:\n%s", err.Error()))
+				}
+			case "string":
+				err = arr.Add("")
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type string to tree for reason:\n%s", err.Error()))
+				}
+			default:
+				panic("value must be any of: \"null\", \"boolean\", \"integer\", \"blob\", \"string\"")
+			}
+		case []interface{}: // Array
+			err = arr.Add(jsonTypeArrayToABIT(t))
+			if err != nil {
+				panic(fmt.Sprintf("unable to add type array to tree for reason:\n%s", err.Error()))
+			}
+		case map[string]interface{}: // Tree
+			err = arr.Add(jsonTypeTreeToABIT(t))
+			if err != nil {
+				panic(fmt.Sprintf("unable to add type tree to tree for reason:\n%s", err.Error()))
+			}
+		default:
+			panic("value to every key in lexicon must be either a string, array or tree")
+		}
+		if err != nil {
+			panic(fmt.Sprintf("unable to add type %s to array for reason:\n%s", reflect.TypeOf(lexicon[i]), err.Error()))
+		}
+	}
+
+	return *arr
+}
+
+func jsonTypeTreeToABIT(lexicon map[string]interface{}) ABITObject {
+	// Create ABITObject
+	tree, err := NewABITObject(&[]byte{})
+	if err != nil {
+		panic(err.Error())
+	}
+	keys := make([]string, 0, len(lexicon))
+	for k := range lexicon {
+		keys = append(keys, k)
+	}
+	for i := range keys {
+		var err error = nil
+		switch t := lexicon[keys[i]].(type) {
+		case string:
+			switch t {
+			case "null":
+				err = tree.Put(keys[i], Null{})
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type null to tree for reason:\n%s", err.Error()))
+				}
+			case "boolean":
+				err = tree.Put(keys[i], false)
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type boolean to tree for reason:\n%s", err.Error()))
+				}
+			case "integer":
+				err = tree.Put(keys[i], int64(0))
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type integer to tree for reason:\n%s", err.Error()))
+				}
+			case "blob":
+				err = tree.Put(keys[i], []byte{})
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type blob to tree for reason:\n%s", err.Error()))
+				}
+			case "string":
+				err = tree.Put(keys[i], "")
+				if err != nil {
+					panic(fmt.Sprintf("unable to add type string to tree for reason:\n%s", err.Error()))
+				}
+			default:
+				panic("Value must be any of: \"null\", \"boolean\", \"integer\", \"blob\", \"string\"")
+			}
+		case []interface{}: // Array
+			err = tree.Put(keys[i], jsonTypeArrayToABIT(t))
+			if err != nil {
+				panic(fmt.Sprintf("unable to add type array to tree for reason:\n%s", err.Error()))
+			}
+		case map[string]interface{}: // Tree
+			err = tree.Put(keys[i], jsonTypeTreeToABIT(t))
+			if err != nil {
+				panic(fmt.Sprintf("unable to add type tree to tree for reason:\n%s", err.Error()))
+			}
+		default:
+			panic("Value to every key in lexicon must be either a string, array or tree")
+		}
+	}
+	return *tree
+}
+
+func (l *ABITLexicon) Matches(doc *ABITObject) bool {
+	return matchTree(&l.lexicon, doc)
+}
+
+func matchTree(a *ABITObject, b *ABITObject) bool {
+	keys1 := make([]string, 0, len(a.tree))
+	for k := range a.tree {
+		keys1 = append(keys1, k)
+	}
+
+	keys2 := make([]string, 0, len(b.tree))
+	for k := range b.tree {
+		keys2 = append(keys2, k)
+	}
+
+	// Same number of items?
+	if len(keys1) != len(keys2) {
+		return false
+	}
+
+	sort.Slice(keys1, func(i, j int) bool {
+		if len(keys1[i]) == len(keys1[j]) {
+			// If lengths are equal, sort lexicographically
+			return keys1[i] < keys1[j]
+		}
+		// Otherwise, sort by length
+		return len(keys1[i]) < len(keys1[j])
+	})
+
+	sort.Slice(keys2, func(i, j int) bool {
+		if len(keys2[i]) == len(keys2[j]) {
+			// If lengths are equal, sort lexicographically
+			return keys2[i] < keys2[j]
+		}
+		// Otherwise, sort by length
+		return len(keys2[i]) < len(keys2[j])
+	})
+
+	// Are keys identical?
+	for i := int64(0); int(i) < len(keys1); i++ {
+		if keys1[i] != keys2[i] {
+			return false
+		}
+	}
+
+	for i := range keys1 {
+		if a.tree[keys1[i]].dataType != b.tree[keys1[i]].dataType {
+			return false
+		}
+
+		switch a.tree[keys1[i]].dataType {
+		case 0b0101: // Array
+			if !matchArray(a.tree[keys1[i]], b.tree[keys1[i]]) {
+				return false
+			}
+		case 0b0110: // Tree
+			if !matchTree(a.tree[keys1[i]], b.tree[keys1[i]]) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func matchArray(a *ABITObject, b *ABITObject) bool {
+	if a.dataType != 0b0101 || b.dataType != 0b0101 {
+		return false
+	}
+
+	if len(a.array.array) != len(b.array.array) {
+		return false
+	}
+
+	for i := range a.array.array {
+		if a.array.array[i].dataType != b.array.array[i].dataType {
+			return false
+		}
+
+		switch a.array.array[i].dataType {
+		case 0b0101: // Array
+			if !matchArray(a.array.array[i], b.array.array[i]) {
+				return false
+			}
+		case 0b0110: // Tree
+			if !matchTree(a.array.array[i], b.array.array[i]) {
+				return false
+			}
+		}
+	}
+
+	return true
 }

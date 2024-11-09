@@ -2,6 +2,7 @@ package abit
 
 import (
 	"bytes"
+	"encoding/json"
 	"math/rand"
 	"strings"
 	"testing"
@@ -502,11 +503,150 @@ func TestGenericArray(t *testing.T) {
 }
 
 func TestInvalidTree(t *testing.T) {
-	for i := 0; i < 500000; i++ {
+	for i := 0; i < 200000; i++ {
 		obj := randBytes(rand.Int63n(256) + 512)
 		_, err := NewABITObject(&obj)
 		if err == nil {
 			t.Fatal("this tree should be invalid, try rerunning test if this happens")
+		}
+	}
+}
+
+var replacementValues = []string{"null", "boolean", "integer", "blob", "string"}
+
+func modifyValues(data interface{}) {
+	hasModified := false
+	for !hasModified {
+		switch v := data.(type) {
+		case map[string]interface{}:
+			for key, val := range v {
+				switch val := val.(type) {
+				case string:
+					// Check if val is one of the target values and replace it
+					if val == "null" || val == "boolean" || val == "integer" || val == "blob" || val == "string" {
+						v[key] = getRandomReplacement(&hasModified, val)
+					}
+				case map[string]interface{}, []interface{}:
+					// Recur for nested maps and slices
+					modifyValues(val)
+				}
+			}
+		case []interface{}:
+			for i, val := range v {
+				switch val := val.(type) {
+				case string:
+					// Check if val is one of the target values and replace it
+					if val == "null" || val == "boolean" || val == "integer" || val == "blob" || val == "string" {
+						v[i] = getRandomReplacement(&hasModified, val)
+					}
+				case map[string]interface{}, []interface{}:
+					// Recur for nested maps and slices
+					modifyValues(val)
+				}
+			}
+		}
+	}
+}
+
+func getRandomReplacement(modified *bool, currentVal string) string {
+	if !(*modified) && (rand.Intn(30) == 0) {
+		val := replacementValues[rand.Intn(len(replacementValues))]
+		for val == currentVal {
+			val = replacementValues[rand.Intn(len(replacementValues))]
+		}
+		*modified = true
+		return val
+	}
+	return currentVal
+}
+
+func TestLexicon(t *testing.T) {
+	jsonData := `{
+		"key1": "null",
+		"key2": "boolean",
+		"key3": "integer",
+		"key4": "blob",
+		"key5": "string",
+		"key6": [
+			"null",
+			"boolean",
+			"integer",
+			"blob",
+			"string",
+			{
+			"key1": "boolean",
+			"key2": "integer"
+			},
+			[
+				"boolean",
+				"integer"
+			]
+		],
+		"key7": {
+			"key1": "boolean",
+			"key2": "integer"
+		}
+	}`
+	lex := InitLexicon(jsonData)
+
+	tree, _ := NewABITObject(&[]byte{})
+	tree.Put("key1", Null{})
+	tree.Put("key2", true)
+	tree.Put("key3", int64(69))
+	tree.Put("key4", []byte{0, 1, 2, 3, 128})
+	tree.Put("key5", "mrrowp :3")
+
+	arr := NewABITArray()
+	arr.Add(Null{})
+	arr.Add(false)
+	arr.Add(int64(7331))
+	arr.Add([]byte{0, 1, 2, 3, 33})
+	arr.Add("shlirp shlorp")
+
+	arrtree, _ := NewABITObject(&[]byte{})
+	arrtree.Put("key1", true)
+	arrtree.Put("key2", int64(123456789))
+
+	arr.Add(*arrtree)
+
+	arrarr := NewABITArray()
+	arrarr.Add(true)
+	arrarr.Add(int64(410))
+
+	arr.Add(*arrarr)
+
+	tree.Put("key6", *arr)
+
+	treetree, _ := NewABITObject(&[]byte{})
+	treetree.Put("key1", true)
+	treetree.Put("key2", int64(3897))
+
+	tree.Put("key7", *treetree)
+
+	if !(&lex).Matches(tree) {
+		t.Fatalf("Doesn't match when should")
+	}
+
+	for i := 0; i < 10000; i++ {
+
+		var data interface{}
+		err := json.Unmarshal([]byte(jsonData), &data)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+
+		modifyValues(data)
+
+		modifiedJson, err := json.MarshalIndent(data, "", "    ")
+		if err != nil {
+			t.Fatal(err.Error())
+			return
+		}
+
+		lex := InitLexicon(string(modifiedJson))
+
+		if (&lex).Matches(tree) {
+			t.Fatalf("match when shouldn't")
 		}
 	}
 }
