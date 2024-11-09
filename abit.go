@@ -945,6 +945,31 @@ type ABITLexicon struct {
 	lexicon ABITObject
 }
 
+// InitLexicon creates an ABITLexicon used for seeing if any ABITObject follows the given schema or not.
+//
+//   - lexicon is a json with the specified scema.
+//   - Returns ABITLexicon
+//
+// # Allowed types:
+//   - "null"
+//   - "boolean"
+//   - "integer"
+//   - "blob"
+//   - "string"
+//
+// # Example:
+//
+//	abit.InitLexicon(`{
+//		"key1":"boolean",
+//		"key2":{
+//			"nested":"key"
+//		},
+//		"key3":[
+//			"string"
+//			"string"
+//			"null"
+//		]
+//	}`)
 func InitLexicon(lexicon string) ABITLexicon {
 	// Unmarshal JSON into a map
 	var lexiconMap map[string]interface{}
@@ -1075,6 +1100,15 @@ func jsonTypeTreeToABIT(lexicon map[string]interface{}) ABITObject {
 	return *tree
 }
 
+// Matches checks if the given ABITObject matches the schema in the lexicon.
+//
+//   - Returns true if matches, returns false otherwise.
+//
+// # Example:
+//
+//	if lex.Matches(doc) {
+//		// functions to handle the valid abit document here.
+//	}
 func (l *ABITLexicon) Matches(doc *ABITObject) bool {
 	return matchTree(&l.lexicon, doc)
 }
