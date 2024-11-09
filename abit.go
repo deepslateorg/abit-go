@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 )
 
@@ -88,15 +87,13 @@ func NewABITArray() *ABITArray {
 // # Requirements
 //   - key must be less than or equal to 256 bytes when encoded with UTF-8, but also more than or equal to 1 byte.
 //   - value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
-//
-// error if key is invalid or value is of invalid type, otherwise nil.
-func (t *ABITObject) Put(key string, value interface{}) error {
+func (t *ABITObject) Put(key string, value interface{}) {
 	// Must be tree type to put an object
 	if t.dataType != 0b0110 {
-		return fmt.Errorf("ABITObject is invalid type")
+		panic("ABITObject is invalid type")
 	}
 	if len([]byte(key)) > 256 || 0 >= len([]byte(key)) {
-		return fmt.Errorf("key too long")
+		panic("key too long")
 	}
 	switch b := value.(type) {
 	case Null:
@@ -138,21 +135,18 @@ func (t *ABITObject) Put(key string, value interface{}) error {
 		if b.dataType == 0b0110 {
 			t.tree[key] = &b
 		} else {
-			return fmt.Errorf("ABITObject is invalid type")
+			panic("ABITObject is invalid type")
 		}
 	default:
-		return fmt.Errorf("unknown type")
+		panic("unknown type")
 	}
-	return nil
 }
 
 // Add adds a value to the ABITArray.
 //
 // # Requirements
 //   - Value can be of types: abit.Null, bool, int64, []byte, string, ABITArray, ABITObject
-//
-// error if input value is of invalid type, otherwise nil.
-func (a *ABITArray) Add(value interface{}) error {
+func (a *ABITArray) Add(value interface{}) {
 	o := &ABITObject{}
 	switch b := value.(type) {
 	case Null:
@@ -176,13 +170,12 @@ func (a *ABITArray) Add(value interface{}) error {
 		if b.dataType == 0b0110 {
 			o = &b
 		} else {
-			return fmt.Errorf("ABITObject is not a valid type")
+			panic("ABITObject is not a valid type")
 		}
 	default:
-		return fmt.Errorf("unsupported type")
+		panic("unsupported type")
 	}
 	a.array = append(a.array, o)
-	return nil
 }
 
 // Keys gets all the keys in a tree.
@@ -223,288 +216,259 @@ func (t *ABITObject) Remove(key string) {
 // Remove the value at index from the ABITArray.
 //
 // # Requirements
-//   - If the index is negative or out of bounds for the array, returns error
-func (a *ABITArray) Remove(index int64) error {
+//   - 0 <= index < length of array
+func (a *ABITArray) Remove(index int64) {
 	if index < 0 || int(index) >= len(a.array) {
-		return fmt.Errorf("index out of bounds")
+		panic("index out of bounds")
 	}
 	ret := make([](*ABITObject), 0)
 	ret = append(ret, (a.array)[:index]...)
 	a.array = append(ret, (a.array)[index+1:]...)
-	return nil
 }
 
-func (a *ABITArray) get(index int64) (interface{}, error) {
+func (a *ABITArray) get(index int64) interface{} {
 	o := a.array[index]
 	switch o.dataType {
 	case 0b0000:
-		return Null{}, nil
+		return Null{}
 	case 0b0001:
-		return o.boolean, nil
+		return o.boolean
 	case 0b0010:
-		return o.integer, nil
+		return o.integer
 	case 0b0011:
-		return o.blob, nil
+		return o.blob
 	case 0b0100:
-		return o.text, nil
+		return o.text
 	case 0b0101:
-		return o.array, nil
+		return o.array
 	case 0b0110:
-		return o, nil
+		return o
 	default:
-		return 0, fmt.Errorf("object trying to be fetched is invalid")
+		panic("object trying to be fetched is invalid")
 	}
 }
 
-func (t *ABITObject) get(key string) (interface{}, error) {
+func (t *ABITObject) get(key string) interface{} {
 	// Must be tree type to get an object
 	if t.dataType != 0b0110 {
-		return 0, fmt.Errorf("ABITObject is not of type tree")
+		panic("ABITObject is not of type tree")
 	}
 	o := t.tree[key]
 	switch o.dataType {
 	case 0b0000:
-		return Null{}, nil
+		return Null{}
 	case 0b0001:
-		return o.boolean, nil
+		return o.boolean
 	case 0b0010:
-		return o.integer, nil
+		return o.integer
 	case 0b0011:
-		return o.blob, nil
+		return o.blob
 	case 0b0100:
-		return o.text, nil
+		return o.text
 	case 0b0101:
-		return o.array, nil
+		return o.array
 	case 0b0110:
-		return o, nil
+		return o
 	default:
-		return 0, fmt.Errorf("object trying to be fetched is invalid")
+		panic("object trying to be fetched is invalid")
 	}
 }
 
 // GetNull fetches abit.Null assosiated with key.
 //
-// Returns error if value associated with key is not an abit.Null
-func (t *ABITObject) GetNull(key string) (Null, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return Null{}, err
-	}
+// # Requirements
+//   - value associated with key is null
+func (t *ABITObject) GetNull(key string) Null {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case Null:
-		return o, nil
+		return o
 	}
-	return Null{}, fmt.Errorf("object trying to be fetched is not a null")
+	panic("object trying to be fetched is not a null")
 }
 
 // GetBool fetches bool assosiated with key.
 //
-// Returns error if value associated with key is not a bool
-func (t *ABITObject) GetBool(key string) (bool, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return false, err
-	}
+// # Requirements
+//   - value associated with key is a boolean
+func (t *ABITObject) GetBool(key string) bool {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case bool:
-		return o, nil
+		return o
 	}
-	return false, fmt.Errorf("object trying to be fetched is not a boolean")
+	panic("object trying to be fetched is not a boolean")
 }
 
 // GetInteger fetches integer assosiated with key.
 //
-// Returns error if value associated with key is not an integer
-func (t *ABITObject) GetInteger(key string) (int64, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return 0, err
-	}
+// # Requirements
+//   - value associated with key is an integer
+func (t *ABITObject) GetInteger(key string) int64 {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case int64:
-		return o, nil
+		return o
 	}
-	return 0, fmt.Errorf("object trying to be fetched is not an integer")
+	panic("object trying to be fetched is not an integer")
 }
 
 // GetBlob fetches blob assosiated with key.
 //
-// Returns error if value associated with key is not a blob
-func (t *ABITObject) GetBlob(key string) (*[]byte, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value associated with key is a blob
+func (t *ABITObject) GetBlob(key string) *[]byte {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case *[]byte:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not a blob")
+	panic("object trying to be fetched is not a blob")
 }
 
 // GetString fetches string assosiated with key.
 //
-// Returns error if value associated with key is not a string
-func (t *ABITObject) GetString(key string) (*string, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value associated with key is a string
+func (t *ABITObject) GetString(key string) *string {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case *string:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not a string")
+	panic("object trying to be fetched is not a string")
 }
 
 // GetArray fetches array assosiated with key.
 //
-// Returns error if value associated with key is not an array
-func (t *ABITObject) GetArray(key string) (*ABITArray, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value associated with key is an array
+func (t *ABITObject) GetArray(key string) *ABITArray {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case *ABITArray:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not an array")
+	panic("object trying to be fetched is not an array")
 }
 
 // GetTree fetches tree assosiated with key.
 //
-// Returns error if value associated with key is not a tree
-func (t *ABITObject) GetTree(key string) (*ABITObject, error) {
-	obj, err := t.get(key)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value associated with key is a tree
+func (t *ABITObject) GetTree(key string) *ABITObject {
+	obj := t.get(key)
 	switch o := obj.(type) {
 	case *ABITObject:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not a tree")
+	panic("object trying to be fetched is not a tree")
 }
 
 // GetNull fetches abit.Null at index.
 //
-// Returns error if value at index is not a null
-func (a *ABITArray) GetNull(index int64) (Null, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return Null{}, err
-	}
+// # Requirements
+//   - value at index is null
+func (a *ABITArray) GetNull(index int64) Null {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case Null:
-		return o, nil
+		return o
 	}
-	return Null{}, fmt.Errorf("object trying to be fetched is not a null")
+	panic("object trying to be fetched is not a null")
 }
 
 // GetBool fetches bool at index.
 //
-// Returns error if value at index is not a bool
-func (a *ABITArray) GetBool(index int64) (bool, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return false, err
-	}
+// # Requirements
+//   - value at index is a boolean
+func (a *ABITArray) GetBool(index int64) bool {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case bool:
-		return o, nil
+		return o
 	}
-	return false, fmt.Errorf("object trying to be fetched is not a boolean")
+	panic("object trying to be fetched is not a boolean")
 }
 
 // GetInteger fetches integer at index.
 //
-// Returns error if value at index is not an integer
-func (a *ABITArray) GetInteger(index int64) (int64, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return 0, err
-	}
+// # Requirements
+//   - value at index is an integer
+func (a *ABITArray) GetInteger(index int64) int64 {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case int64:
-		return o, nil
+		return o
 	}
-	return 0, fmt.Errorf("object trying to be fetched is not an integer")
+	panic("object trying to be fetched is not an integer")
 }
 
 // GetBlob fetches blob at index.
 //
-// Returns error if value at index is not a blob
-func (a *ABITArray) GetBlob(index int64) (*[]byte, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value at index is a blob
+func (a *ABITArray) GetBlob(index int64) *[]byte {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case *[]byte:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not a blob")
+	panic("object trying to be fetched is not a blob")
 }
 
 // GetString fetches string at index.
 //
-// Returns error if value at index is not a string
-func (a *ABITArray) GetString(index int64) (*string, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value at index is a string
+func (a *ABITArray) GetString(index int64) *string {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case *string:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not a string")
+	panic("object trying to be fetched is not a string")
 }
 
 // GetArray fetches array at index.
 //
-// Returns error if value at index is not an array
-func (a *ABITArray) GetArray(index int64) (*ABITArray, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value at index is an array
+func (a *ABITArray) GetArray(index int64) *ABITArray {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case *ABITArray:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not an array")
+	panic("object trying to be fetched is not an array")
 }
 
 // GetTree fetches tree at index.
 //
-// Returns error if value at index is not a tree
-func (a *ABITArray) GetTree(index int64) (*ABITObject, error) {
-	obj, err := a.get(index)
-	if err != nil {
-		return nil, err
-	}
+// # Requirements
+//   - value at index is a tree
+func (a *ABITArray) GetTree(index int64) *ABITObject {
+	obj := a.get(index)
 	switch o := obj.(type) {
 	case *ABITObject:
-		return o, nil
+		return o
 	}
-	return nil, fmt.Errorf("object trying to be fetched is not a tree")
+	panic("object trying to be fetched is not a tree")
 }
 
-func encodeKey(value string) (*[]byte, error) {
+func encodeKey(value string) *[]byte {
 	keyBytes := []byte(value)
 	if len(keyBytes) > 256 {
-		return nil, fmt.Errorf("key too long")
+		panic("key too long")
 	} else if len(keyBytes) < 1 {
-		return nil, fmt.Errorf("key too short")
+		panic("key too short")
 	}
 	buf := make([]byte, 1+len(keyBytes))
 
 	buf[0] = uint8(len(keyBytes) - 1)
 	copy(buf[1:], keyBytes)
 
-	return &buf, nil
+	return &buf
 }
 
 func encodeNull() *[]byte {
@@ -562,7 +526,7 @@ func encodeString(value *string) *[]byte {
 	return encodeBlob(&stringBytes, 0b0100)
 }
 
-func encodeArray(value *ABITArray) (*[]byte, error) {
+func encodeArray(value *ABITArray) *[]byte {
 	var buffer bytes.Buffer
 	for _, obj := range value.array {
 		switch obj.dataType {
@@ -577,26 +541,20 @@ func encodeArray(value *ABITArray) (*[]byte, error) {
 		case 0b0100:
 			buffer.Write(*encodeString(obj.text))
 		case 0b0101:
-			p, err := encodeArray(obj.array)
-			if err != nil {
-				return nil, err
-			}
+			p := encodeArray(obj.array)
 			buffer.Write(*p)
 		case 0b0110:
-			p, err := encodeTree(obj, true)
-			if err != nil {
-				return nil, err
-			}
+			p := encodeTree(obj, true)
 			buffer.Write(*p)
 		default:
-			return nil, fmt.Errorf("object in array is of invalid type")
+			panic("object in array is of invalid type")
 		}
 	}
 	p := buffer.Bytes()
-	return encodeBlob(&p, 0b0101), nil
+	return encodeBlob(&p, 0b0101)
 }
 
-func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
+func encodeTree(value *ABITObject, nested bool) *[]byte {
 	keys := make([]string, 0, len(value.tree))
 	for k := range value.tree {
 		keys = append(keys, k)
@@ -613,10 +571,7 @@ func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
 
 	var buffer bytes.Buffer
 	for _, key := range keys {
-		p, err := encodeKey(key)
-		if err != nil {
-			return nil, err
-		}
+		p := encodeKey(key)
 		buffer.Write(*p)
 		obj := value.tree[key]
 		switch obj.dataType {
@@ -631,35 +586,27 @@ func encodeTree(value *ABITObject, nested bool) (*[]byte, error) {
 		case 0b0100:
 			buffer.Write(*encodeString(obj.text))
 		case 0b0101:
-			p, err := encodeArray(obj.array)
-			if err != nil {
-				return nil, err
-			}
+			p := encodeArray(obj.array)
 			buffer.Write(*p)
 		case 0b0110:
-			p, err := encodeTree(obj, true)
-			if err != nil {
-				return nil, err
-			}
+			p := encodeTree(obj, true)
 			buffer.Write(*p)
 		default:
-			return nil, fmt.Errorf("object in array is of invalid type")
+			panic("object in array is of invalid type")
 		}
 	}
 	p := buffer.Bytes()
 	if nested {
-		return encodeBlob(&p, 0b0110), nil
+		return encodeBlob(&p, 0b0110)
 	} else {
-		return &p, nil
+		return &p
 	}
 }
 
 // ToByteArray converts the ABITObject to a binary document in abit format.
-//
-// Returns error if the tree contains invalid objects.
-func (t *ABITObject) ToByteArray() ([]byte, error) {
-	p, err := encodeTree(t, false)
-	return *p, err
+func (t *ABITObject) ToByteArray() []byte {
+	p := encodeTree(t, false)
+	return *p
 }
 
 func decodeKey(blob *[]byte, offset int64) (string, int64, error) {
@@ -1009,53 +956,28 @@ func jsonTypeArrayToABIT(lexicon []interface{}) ABITArray {
 	arr := NewABITArray()
 
 	for i := range lexicon {
-		var err error = nil
 		switch t := lexicon[i].(type) {
 		case string:
 			switch t {
 			case "null":
-				err = arr.Add(Null{})
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type null to tree for reason:\n%s", err.Error()))
-				}
+				arr.Add(Null{})
 			case "boolean":
-				err = arr.Add(false)
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type boolean to tree for reason:\n%s", err.Error()))
-				}
+				arr.Add(false)
 			case "integer":
-				err = arr.Add(int64(0))
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type integer to tree for reason:\n%s", err.Error()))
-				}
+				arr.Add(int64(0))
 			case "blob":
-				err = arr.Add([]byte{})
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type blob to tree for reason:\n%s", err.Error()))
-				}
+				arr.Add([]byte{})
 			case "string":
-				err = arr.Add("")
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type string to tree for reason:\n%s", err.Error()))
-				}
+				arr.Add("")
 			default:
 				panic("value must be any of: \"null\", \"boolean\", \"integer\", \"blob\", \"string\"")
 			}
 		case []interface{}: // Array
-			err = arr.Add(jsonTypeArrayToABIT(t))
-			if err != nil {
-				panic(fmt.Sprintf("unable to add type array to tree for reason:\n%s", err.Error()))
-			}
+			arr.Add(jsonTypeArrayToABIT(t))
 		case map[string]interface{}: // Tree
-			err = arr.Add(jsonTypeTreeToABIT(t))
-			if err != nil {
-				panic(fmt.Sprintf("unable to add type tree to tree for reason:\n%s", err.Error()))
-			}
+			arr.Add(jsonTypeTreeToABIT(t))
 		default:
 			panic("value to every key in lexicon must be either a string, array or tree")
-		}
-		if err != nil {
-			panic(fmt.Sprintf("unable to add type %s to array for reason:\n%s", reflect.TypeOf(lexicon[i]), err.Error()))
 		}
 	}
 
@@ -1073,48 +995,26 @@ func jsonTypeTreeToABIT(lexicon map[string]interface{}) ABITObject {
 		keys = append(keys, k)
 	}
 	for i := range keys {
-		var err error = nil
 		switch t := lexicon[keys[i]].(type) {
 		case string:
 			switch t {
 			case "null":
-				err = tree.Put(keys[i], Null{})
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type null to tree for reason:\n%s", err.Error()))
-				}
+				tree.Put(keys[i], Null{})
 			case "boolean":
-				err = tree.Put(keys[i], false)
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type boolean to tree for reason:\n%s", err.Error()))
-				}
+				tree.Put(keys[i], false)
 			case "integer":
-				err = tree.Put(keys[i], int64(0))
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type integer to tree for reason:\n%s", err.Error()))
-				}
+				tree.Put(keys[i], int64(0))
 			case "blob":
-				err = tree.Put(keys[i], []byte{})
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type blob to tree for reason:\n%s", err.Error()))
-				}
+				tree.Put(keys[i], []byte{})
 			case "string":
-				err = tree.Put(keys[i], "")
-				if err != nil {
-					panic(fmt.Sprintf("unable to add type string to tree for reason:\n%s", err.Error()))
-				}
+				tree.Put(keys[i], "")
 			default:
 				panic("Value must be any of: \"null\", \"boolean\", \"integer\", \"blob\", \"string\"")
 			}
 		case []interface{}: // Array
-			err = tree.Put(keys[i], jsonTypeArrayToABIT(t))
-			if err != nil {
-				panic(fmt.Sprintf("unable to add type array to tree for reason:\n%s", err.Error()))
-			}
+			tree.Put(keys[i], jsonTypeArrayToABIT(t))
 		case map[string]interface{}: // Tree
-			err = tree.Put(keys[i], jsonTypeTreeToABIT(t))
-			if err != nil {
-				panic(fmt.Sprintf("unable to add type tree to tree for reason:\n%s", err.Error()))
-			}
+			tree.Put(keys[i], jsonTypeTreeToABIT(t))
 		default:
 			panic("Value to every key in lexicon must be either a string, array or tree")
 		}

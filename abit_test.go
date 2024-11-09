@@ -8,65 +8,41 @@ import (
 	"testing"
 )
 
+// Helper function to check if a function panics
+func shouldPanic(t *testing.T, f func()) {
+	t.Helper() // Marks this function as a helper in the test logs
+
+	// Use defer and recover to catch a panic
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected panic, but function completed successfully.")
+		}
+	}()
+
+	// Run the function that we expect to panic
+	f()
+}
+
 func TestNull(t *testing.T) {
 	tree, _ := NewABITObject(&[]byte{})
 	// legal keys
-	err := tree.Put("null obj", Null{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 128), Null{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 129), Null{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 255), Null{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 256), Null{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	tree.Put("null obj", Null{})
+	tree.Put(strings.Repeat(" ", 128), Null{})
+	tree.Put(strings.Repeat(" ", 129), Null{})
+	tree.Put(strings.Repeat(" ", 255), Null{})
+	tree.Put(strings.Repeat(" ", 256), Null{})
 
 	// illegal keys
-	err = tree.Put(strings.Repeat(" ", 257), Null{})
-	if err == nil {
-		t.Fatal("was able to add a too long key")
-	}
-	err = tree.Put(strings.Repeat(" ", 6969), Null{})
-	if err == nil {
-		t.Fatal("was able to add a too long key")
-	}
-	err = tree.Put("", Null{})
-	if err == nil {
-		t.Fatal("was able to add a too short key")
-	}
+	shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 257), Null{}) })
+	shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 6969), Null{}) })
+	shouldPanic(t, func() { tree.Put("", Null{}) })
 
 	// fetch values from keys
-	_, err = tree.GetNull("null obj")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	_, err = tree.GetNull(strings.Repeat(" ", 128))
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	_, err = tree.GetNull(strings.Repeat(" ", 129))
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	_, err = tree.GetNull(strings.Repeat(" ", 255))
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	_, err = tree.GetNull(strings.Repeat(" ", 256))
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	tree.GetNull("null obj")
+	tree.GetNull(strings.Repeat(" ", 128))
+	tree.GetNull(strings.Repeat(" ", 129))
+	tree.GetNull(strings.Repeat(" ", 255))
+	tree.GetNull(strings.Repeat(" ", 256))
 }
 
 func TestBoolean(t *testing.T) {
@@ -75,75 +51,36 @@ func TestBoolean(t *testing.T) {
 
 	for i := 0; i < 2; i++ {
 		// legal keys
-		err := tree.Put("bool obj", obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		err = tree.Put(strings.Repeat(" ", 128), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		err = tree.Put(strings.Repeat(" ", 129), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		err = tree.Put(strings.Repeat(" ", 255), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		err = tree.Put(strings.Repeat(" ", 256), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put("bool obj", obj)
+		tree.Put(strings.Repeat(" ", 128), obj)
+		tree.Put(strings.Repeat(" ", 129), obj)
+		tree.Put(strings.Repeat(" ", 255), obj)
+		tree.Put(strings.Repeat(" ", 256), obj)
 
 		// illegal keys
-		err = tree.Put(strings.Repeat(" ", 257), obj)
-		if err == nil {
-			t.Fatal("was able to add a too long key")
-		}
-		err = tree.Put(strings.Repeat(" ", 6969), obj)
-		if err == nil {
-			t.Fatal("was able to add a too long key")
-		}
-		err = tree.Put("", obj)
-		if err == nil {
-			t.Fatal("was able to add a too short key")
-		}
+		shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 257), obj) })
+		shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 6969), obj) })
+		shouldPanic(t, func() { tree.Put("", obj) })
 
 		// fetch values from keys
 		var out bool
-		out, err = tree.GetBool("bool obj")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		out = tree.GetBool("bool obj")
 		if out != obj {
 			t.Fatal("incorrect value")
 		}
-		out, err = tree.GetBool(strings.Repeat(" ", 128))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		out = tree.GetBool(strings.Repeat(" ", 128))
 		if out != obj {
 			t.Fatal("incorrect value")
 		}
-		out, err = tree.GetBool(strings.Repeat(" ", 129))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		out = tree.GetBool(strings.Repeat(" ", 129))
 		if out != obj {
 			t.Fatal("incorrect value")
 		}
-		out, err = tree.GetBool(strings.Repeat(" ", 255))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		out = tree.GetBool(strings.Repeat(" ", 255))
 		if out != obj {
 			t.Fatal("incorrect value")
 		}
-		out, err = tree.GetBool(strings.Repeat(" ", 256))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		out = tree.GetBool(strings.Repeat(" ", 256))
 		if out != obj {
 			t.Fatal("incorrect value")
 		}
@@ -156,47 +93,20 @@ func TestInteger(t *testing.T) {
 	obj := int64(6969696969420)
 
 	// legal keys
-	err := tree.Put("int obj", obj)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 128), obj)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 129), obj)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 255), obj)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err = tree.Put(strings.Repeat(" ", 256), obj)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	tree.Put("int obj", obj)
+	tree.Put(strings.Repeat(" ", 128), obj)
+	tree.Put(strings.Repeat(" ", 129), obj)
+	tree.Put(strings.Repeat(" ", 255), obj)
+	tree.Put(strings.Repeat(" ", 256), obj)
 
 	// illegal keys
-	err = tree.Put(strings.Repeat(" ", 257), obj)
-	if err == nil {
-		t.Fatal("was able to add a too long key")
-	}
-	err = tree.Put(strings.Repeat(" ", 6969), obj)
-	if err == nil {
-		t.Fatal("was able to add a too long key")
-	}
-	err = tree.Put("", obj)
-	if err == nil {
-		t.Fatal("was able to add a too short key")
-	}
+	shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 257), obj) })
+	shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 6969), obj) })
+	shouldPanic(t, func() { tree.Put("", obj) })
 
 	// fetch values from keys
 	var out int64
-	out, err = tree.GetInteger("int obj")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	out = tree.GetInteger("int obj")
 	if out != obj {
 		t.Fatal("incorrect value")
 	}
@@ -206,10 +116,7 @@ func TestInteger(t *testing.T) {
 		tree.Put("int obj", obj)
 		tree.Put("meow", obj+5)
 		tree.Put("meowmeow", -obj)
-		out, err = tree.GetInteger("int obj")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		out = tree.GetInteger("int obj")
 		if out != obj {
 			t.Fatal("didn't fetch same number as inputted")
 		}
@@ -232,79 +139,40 @@ func TestBlob(t *testing.T) {
 	for i := int64(0); i < 5000; i++ {
 		// legal keys
 		obj = randBytes(rand.Int63n(2) * i)
-		err := tree.Put("blob obj", obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetBlob("blob obj")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put("blob obj", obj)
+		out = tree.GetBlob("blob obj")
 		if !bytes.Equal(obj, *out) {
 			t.Fatal("Input not same as output")
 		}
 		obj = randBytes(rand.Int63n(2) * i)
-		err = tree.Put(strings.Repeat(" ", 128), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetBlob(strings.Repeat(" ", 128))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 128), obj)
+		out = tree.GetBlob(strings.Repeat(" ", 128))
 		if !bytes.Equal(obj, *out) {
 			t.Fatal("Input not same as output")
 		}
 		obj = randBytes(rand.Int63n(2) * i)
-		err = tree.Put(strings.Repeat(" ", 129), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetBlob(strings.Repeat(" ", 129))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 129), obj)
+		out = tree.GetBlob(strings.Repeat(" ", 129))
 		if !bytes.Equal(obj, *out) {
 			t.Fatal("Input not same as output")
 		}
 		obj = randBytes(rand.Int63n(2) * i)
-		err = tree.Put(strings.Repeat(" ", 255), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetBlob(strings.Repeat(" ", 255))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 255), obj)
+		out = tree.GetBlob(strings.Repeat(" ", 255))
 		if !bytes.Equal(obj, *out) {
 			t.Fatal("Input not same as output")
 		}
 		obj = randBytes(rand.Int63n(2) * i)
-		err = tree.Put(strings.Repeat(" ", 256), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetBlob(strings.Repeat(" ", 256))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 256), obj)
+		out = tree.GetBlob(strings.Repeat(" ", 256))
 		if !bytes.Equal(obj, *out) {
 			t.Fatal("Input not same as output")
 		}
 
 		// illegal keys
-		err = tree.Put(strings.Repeat(" ", 257), obj)
-		if err == nil {
-			t.Fatal("was able to add a too long key")
-		}
-		err = tree.Put(strings.Repeat(" ", 6969), obj)
-		if err == nil {
-			t.Fatal("was able to add a too long key")
-		}
-		err = tree.Put("", obj)
-		if err == nil {
-			t.Fatal("was able to add a too short key")
-		}
+		shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 257), obj) })
+		shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 6969), obj) })
+		shouldPanic(t, func() { tree.Put("", obj) })
 	}
 }
 
@@ -316,79 +184,40 @@ func TestString(t *testing.T) {
 	for i := int64(0); i < 5000; i++ {
 		// legal keys
 		obj = string(randBytes(rand.Int63n(2) * i))
-		err := tree.Put("string obj", string(obj))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetString("string obj")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put("string obj", string(obj))
+		out = tree.GetString("string obj")
 		if (*out) != obj {
 			t.Fatal("Input not same as output")
 		}
 		obj = string(randBytes(rand.Int63n(2) * i))
-		err = tree.Put(strings.Repeat(" ", 128), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetString(strings.Repeat(" ", 128))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 128), obj)
+		out = tree.GetString(strings.Repeat(" ", 128))
 		if (*out) != obj {
 			t.Fatal("Input not same as output")
 		}
 		obj = string(randBytes(rand.Int63n(2) * i))
-		err = tree.Put(strings.Repeat(" ", 129), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetString(strings.Repeat(" ", 129))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 129), obj)
+		out = tree.GetString(strings.Repeat(" ", 129))
 		if (*out) != obj {
 			t.Fatal("Input not same as output")
 		}
 		obj = string(randBytes(rand.Int63n(2) * i))
-		err = tree.Put(strings.Repeat(" ", 255), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetString(strings.Repeat(" ", 255))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 255), obj)
+		out = tree.GetString(strings.Repeat(" ", 255))
 		if (*out) != obj {
 			t.Fatal("Input not same as output")
 		}
 		obj = string(randBytes(rand.Int63n(2) * i))
-		err = tree.Put(strings.Repeat(" ", 256), obj)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		out, err = tree.GetString(strings.Repeat(" ", 256))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		tree.Put(strings.Repeat(" ", 256), obj)
+		out = tree.GetString(strings.Repeat(" ", 256))
 		if (*out) != obj {
 			t.Fatal("Input not same as output")
 		}
 
 		// illegal keys
-		err = tree.Put(strings.Repeat(" ", 257), obj)
-		if err == nil {
-			t.Fatal("was able to add a too long key")
-		}
-		err = tree.Put(strings.Repeat(" ", 6969), obj)
-		if err == nil {
-			t.Fatal("was able to add a too long key")
-		}
-		err = tree.Put("", obj)
-		if err == nil {
-			t.Fatal("was able to add a too short key")
-		}
+		shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 257), obj) })
+		shouldPanic(t, func() { tree.Put(strings.Repeat(" ", 6969), obj) })
+		shouldPanic(t, func() { tree.Put("", obj) })
 	}
 }
 
@@ -424,7 +253,7 @@ func TestGenericTree(t *testing.T) {
 	tree.Put("nesty", *nestedTree)
 	tree.Put("a very very very very very very very very very very very very very  very very very very very very very very very very very very very  very very very very very very very very very very very very very  very very very very very very very very very ve long key", "meow")
 
-	treeBlob1, _ := tree.ToByteArray()
+	treeBlob1 := tree.ToByteArray()
 	/*for i := 0; i < len(treeBlob1); i++ {
 		fmt.Printf("%02X ", treeBlob1[i])
 	}
@@ -433,7 +262,7 @@ func TestGenericTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	treeBlob2, _ := tree2.ToByteArray()
+	treeBlob2 := tree2.ToByteArray()
 
 	if !bytes.Equal(treeBlob1, treeBlob2) {
 		t.Fatal("abit not equal")
@@ -452,43 +281,28 @@ func TestGenericArray(t *testing.T) {
 	arr.Add(int64(1))
 	tree.Put("array obj", *arr)
 
-	treeBlob1, _ := tree.ToByteArray()
+	treeBlob1 := tree.ToByteArray()
 
 	tree2, err := NewABITObject(&treeBlob1)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	treeBlob2, _ := tree2.ToByteArray()
+	treeBlob2 := tree2.ToByteArray()
 
 	if !bytes.Equal(treeBlob1, treeBlob2) {
 		t.Fatal("abit not equal")
 	}
 
-	arr2, err := tree2.GetArray("array obj")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	arr2 := tree2.GetArray("array obj")
 
-	s1, err := arr.GetString(0)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	s2, err := arr2.GetString(0)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	s1 := arr.GetString(0)
+	s2 := arr2.GetString(0)
 	if *s1 != *s2 {
 		t.Fatalf("strings not equal: %s <-> %s", *s1, *s2)
 	}
 
-	i1, err := arr.GetInteger(1)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	i2, err := arr2.GetInteger(1)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	i1 := arr.GetInteger(1)
+	i2 := arr2.GetInteger(1)
 	if i1 != i2 {
 		t.Fatalf("integers not equal: %d <-> %d", i1, i2)
 	}

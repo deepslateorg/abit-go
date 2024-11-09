@@ -22,11 +22,7 @@ header: |-
   tree.Put("riktnummer", blob)
 
   // convert ABITObject to an abit binary / document
-  doc, err := tree.ToByteArray()
-  if err != nil {
-      // Handle error TT~~TT
-      // Something went seriously wrong
-  }
+  doc := tree.ToByteArray()
 
   // create an ABITObject from an abit document
   tree2, err := NewABITObject(&doc)
@@ -36,17 +32,10 @@ header: |-
   }
 
   // get array from tree
-  arr2, err := tree2.GetArray("landet")
-  if err != nil {
-      // Handle error TT~~TT
-  }
+  arr2 := tree2.GetArray("landet")
 
   // get value from array
-  vegetable, err := arr2.GetString(0)
-  if err != nil {
-      // Handle error TT~~TT
-      // item at index wasn't string / index out of bounds
-  }
+  vegetable := arr2.GetString(0)
   ```
 repository:
   url: https://github.com/deepslateorg/abit-go

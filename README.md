@@ -22,11 +22,7 @@ blob := []byte{0, 4, 1, 0}
 tree.Put("riktnummer", blob)
 
 // convert ABITObject to an abit binary / document
-doc, err := tree.ToByteArray()
-if err != nil {
-    // Handle error TT~~TT
-    // Something went seriously wrong
-}
+doc := tree.ToByteArray()
 
 // create an ABITObject from an abit document
 tree2, err := NewABITObject(&doc)
@@ -36,17 +32,10 @@ if err != nil {
 }
 
 // get array from tree
-arr2, err := tree2.GetArray("landet")
-if err != nil {
-    // Handle error TT~~TT
-}
+arr2 := tree2.GetArray("landet")
 
 // get value from array
-vegetable, err := arr2.GetString(0)
-if err != nil {
-    // Handle error TT~~TT
-    // item at index wasn't string / index out of bounds
-}
+vegetable := arr2.GetString(0)
 ```
 
 # abit
@@ -61,37 +50,37 @@ Package abit implements abit documents into go.
 
 - [type ABITArray](<#ABITArray>)
   - [func NewABITArray\(\) \*ABITArray](<#NewABITArray>)
-  - [func \(a \*ABITArray\) Add\(value interface\{\}\) error](<#ABITArray.Add>)
-  - [func \(a \*ABITArray\) GetArray\(index int64\) \(\*ABITArray, error\)](<#ABITArray.GetArray>)
-  - [func \(a \*ABITArray\) GetBlob\(index int64\) \(\*\[\]byte, error\)](<#ABITArray.GetBlob>)
-  - [func \(a \*ABITArray\) GetBool\(index int64\) \(bool, error\)](<#ABITArray.GetBool>)
-  - [func \(a \*ABITArray\) GetInteger\(index int64\) \(int64, error\)](<#ABITArray.GetInteger>)
-  - [func \(a \*ABITArray\) GetNull\(index int64\) \(Null, error\)](<#ABITArray.GetNull>)
-  - [func \(a \*ABITArray\) GetString\(index int64\) \(\*string, error\)](<#ABITArray.GetString>)
-  - [func \(a \*ABITArray\) GetTree\(index int64\) \(\*ABITObject, error\)](<#ABITArray.GetTree>)
+  - [func \(a \*ABITArray\) Add\(value interface\{\}\)](<#ABITArray.Add>)
+  - [func \(a \*ABITArray\) GetArray\(index int64\) \*ABITArray](<#ABITArray.GetArray>)
+  - [func \(a \*ABITArray\) GetBlob\(index int64\) \*\[\]byte](<#ABITArray.GetBlob>)
+  - [func \(a \*ABITArray\) GetBool\(index int64\) bool](<#ABITArray.GetBool>)
+  - [func \(a \*ABITArray\) GetInteger\(index int64\) int64](<#ABITArray.GetInteger>)
+  - [func \(a \*ABITArray\) GetNull\(index int64\) Null](<#ABITArray.GetNull>)
+  - [func \(a \*ABITArray\) GetString\(index int64\) \*string](<#ABITArray.GetString>)
+  - [func \(a \*ABITArray\) GetTree\(index int64\) \*ABITObject](<#ABITArray.GetTree>)
   - [func \(a \*ABITArray\) Length\(\) int](<#ABITArray.Length>)
-  - [func \(a \*ABITArray\) Remove\(index int64\) error](<#ABITArray.Remove>)
+  - [func \(a \*ABITArray\) Remove\(index int64\)](<#ABITArray.Remove>)
 - [type ABITLexicon](<#ABITLexicon>)
   - [func InitLexicon\(lexicon string\) ABITLexicon](<#InitLexicon>)
   - [func \(l \*ABITLexicon\) Matches\(doc \*ABITObject\) bool](<#ABITLexicon.Matches>)
 - [type ABITObject](<#ABITObject>)
   - [func NewABITObject\(document \*\[\]byte\) \(\*ABITObject, error\)](<#NewABITObject>)
-  - [func \(t \*ABITObject\) GetArray\(key string\) \(\*ABITArray, error\)](<#ABITObject.GetArray>)
-  - [func \(t \*ABITObject\) GetBlob\(key string\) \(\*\[\]byte, error\)](<#ABITObject.GetBlob>)
-  - [func \(t \*ABITObject\) GetBool\(key string\) \(bool, error\)](<#ABITObject.GetBool>)
-  - [func \(t \*ABITObject\) GetInteger\(key string\) \(int64, error\)](<#ABITObject.GetInteger>)
-  - [func \(t \*ABITObject\) GetNull\(key string\) \(Null, error\)](<#ABITObject.GetNull>)
-  - [func \(t \*ABITObject\) GetString\(key string\) \(\*string, error\)](<#ABITObject.GetString>)
-  - [func \(t \*ABITObject\) GetTree\(key string\) \(\*ABITObject, error\)](<#ABITObject.GetTree>)
+  - [func \(t \*ABITObject\) GetArray\(key string\) \*ABITArray](<#ABITObject.GetArray>)
+  - [func \(t \*ABITObject\) GetBlob\(key string\) \*\[\]byte](<#ABITObject.GetBlob>)
+  - [func \(t \*ABITObject\) GetBool\(key string\) bool](<#ABITObject.GetBool>)
+  - [func \(t \*ABITObject\) GetInteger\(key string\) int64](<#ABITObject.GetInteger>)
+  - [func \(t \*ABITObject\) GetNull\(key string\) Null](<#ABITObject.GetNull>)
+  - [func \(t \*ABITObject\) GetString\(key string\) \*string](<#ABITObject.GetString>)
+  - [func \(t \*ABITObject\) GetTree\(key string\) \*ABITObject](<#ABITObject.GetTree>)
   - [func \(t \*ABITObject\) Keys\(\) \[\]string](<#ABITObject.Keys>)
-  - [func \(t \*ABITObject\) Put\(key string, value interface\{\}\) error](<#ABITObject.Put>)
+  - [func \(t \*ABITObject\) Put\(key string, value interface\{\}\)](<#ABITObject.Put>)
   - [func \(t \*ABITObject\) Remove\(key string\)](<#ABITObject.Remove>)
-  - [func \(t \*ABITObject\) ToByteArray\(\) \(\[\]byte, error\)](<#ABITObject.ToByteArray>)
+  - [func \(t \*ABITObject\) ToByteArray\(\) \[\]byte](<#ABITObject.ToByteArray>)
 - [type Null](<#Null>)
 
 
 <a name="ABITArray"></a>
-## type [ABITArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L31-L33>)
+## type [ABITArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L30-L32>)
 
 ABITArray is used to store ABIT arrays.
 
@@ -107,7 +96,7 @@ type ABITArray struct {
 ```
 
 <a name="NewABITArray"></a>
-### func [NewABITArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L81>)
+### func [NewABITArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L80>)
 
 ```go
 func NewABITArray() *ABITArray
@@ -123,10 +112,10 @@ arr := abit.NewABITArray()
 ```
 
 <a name="ABITArray.Add"></a>
-### func \(\*ABITArray\) [Add](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L155>)
+### func \(\*ABITArray\) [Add](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L149>)
 
 ```go
-func (a *ABITArray) Add(value interface{}) error
+func (a *ABITArray) Add(value interface{})
 ```
 
 Add adds a value to the ABITArray.
@@ -135,87 +124,99 @@ Add adds a value to the ABITArray.
 
 - Value can be of types: abit.Null, bool, int64, \[\]byte, string, ABITArray, ABITObject
 
-error if input value is of invalid type, otherwise nil.
-
 <a name="ABITArray.GetArray"></a>
-### func \(\*ABITArray\) [GetArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L468>)
+### func \(\*ABITArray\) [GetArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L437>)
 
 ```go
-func (a *ABITArray) GetArray(index int64) (*ABITArray, error)
+func (a *ABITArray) GetArray(index int64) *ABITArray
 ```
 
 GetArray fetches array at index.
 
-Returns error if value at index is not an array
+#### Requirements
+
+- value at index is an array
 
 <a name="ABITArray.GetBlob"></a>
-### func \(\*ABITArray\) [GetBlob](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L438>)
+### func \(\*ABITArray\) [GetBlob](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L411>)
 
 ```go
-func (a *ABITArray) GetBlob(index int64) (*[]byte, error)
+func (a *ABITArray) GetBlob(index int64) *[]byte
 ```
 
 GetBlob fetches blob at index.
 
-Returns error if value at index is not a blob
+#### Requirements
+
+- value at index is a blob
 
 <a name="ABITArray.GetBool"></a>
-### func \(\*ABITArray\) [GetBool](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L408>)
+### func \(\*ABITArray\) [GetBool](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L385>)
 
 ```go
-func (a *ABITArray) GetBool(index int64) (bool, error)
+func (a *ABITArray) GetBool(index int64) bool
 ```
 
 GetBool fetches bool at index.
 
-Returns error if value at index is not a bool
+#### Requirements
+
+- value at index is a boolean
 
 <a name="ABITArray.GetInteger"></a>
-### func \(\*ABITArray\) [GetInteger](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L423>)
+### func \(\*ABITArray\) [GetInteger](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L398>)
 
 ```go
-func (a *ABITArray) GetInteger(index int64) (int64, error)
+func (a *ABITArray) GetInteger(index int64) int64
 ```
 
 GetInteger fetches integer at index.
 
-Returns error if value at index is not an integer
+#### Requirements
+
+- value at index is an integer
 
 <a name="ABITArray.GetNull"></a>
-### func \(\*ABITArray\) [GetNull](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L393>)
+### func \(\*ABITArray\) [GetNull](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L372>)
 
 ```go
-func (a *ABITArray) GetNull(index int64) (Null, error)
+func (a *ABITArray) GetNull(index int64) Null
 ```
 
 GetNull fetches abit.Null at index.
 
-Returns error if value at index is not a null
+#### Requirements
+
+- value at index is null
 
 <a name="ABITArray.GetString"></a>
-### func \(\*ABITArray\) [GetString](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L453>)
+### func \(\*ABITArray\) [GetString](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L424>)
 
 ```go
-func (a *ABITArray) GetString(index int64) (*string, error)
+func (a *ABITArray) GetString(index int64) *string
 ```
 
 GetString fetches string at index.
 
-Returns error if value at index is not a string
+#### Requirements
+
+- value at index is a string
 
 <a name="ABITArray.GetTree"></a>
-### func \(\*ABITArray\) [GetTree](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L483>)
+### func \(\*ABITArray\) [GetTree](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L450>)
 
 ```go
-func (a *ABITArray) GetTree(index int64) (*ABITObject, error)
+func (a *ABITArray) GetTree(index int64) *ABITObject
 ```
 
 GetTree fetches tree at index.
 
-Returns error if value at index is not a tree
+#### Requirements
+
+- value at index is a tree
 
 <a name="ABITArray.Length"></a>
-### func \(\*ABITArray\) [Length](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L214>)
+### func \(\*ABITArray\) [Length](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L207>)
 
 ```go
 func (a *ABITArray) Length() int
@@ -232,20 +233,20 @@ for i := 0; i < arr.Length(); i++ {
 ```
 
 <a name="ABITArray.Remove"></a>
-### func \(\*ABITArray\) [Remove](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L227>)
+### func \(\*ABITArray\) [Remove](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L220>)
 
 ```go
-func (a *ABITArray) Remove(index int64) error
+func (a *ABITArray) Remove(index int64)
 ```
 
 Remove the value at index from the ABITArray.
 
 #### Requirements
 
-- If the index is negative or out of bounds for the array, returns error
+- 0 \<= index \< length of array
 
 <a name="ABITLexicon"></a>
-## type [ABITLexicon](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L39-L41>)
+## type [ABITLexicon](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L38-L40>)
 
 ABITLexicon stores a schema to see if a given ABITObject matches the schema.
 
@@ -256,7 +257,7 @@ type ABITLexicon struct {
 ```
 
 <a name="InitLexicon"></a>
-### func [InitLexicon](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L995>)
+### func [InitLexicon](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L942>)
 
 ```go
 func InitLexicon(lexicon string) ABITLexicon
@@ -292,7 +293,7 @@ abit.InitLexicon(`{
 ```
 
 <a name="ABITLexicon.Matches"></a>
-### func \(\*ABITLexicon\) [Matches](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L1134>)
+### func \(\*ABITLexicon\) [Matches](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L1034>)
 
 ```go
 func (l *ABITLexicon) Matches(doc *ABITObject) bool
@@ -311,7 +312,7 @@ if lex.Matches(doc) {
 ```
 
 <a name="ABITObject"></a>
-## type [ABITObject](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L17-L25>)
+## type [ABITObject](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L16-L24>)
 
 ABITObject is used to store ABIT trees.
 
@@ -327,7 +328,7 @@ type ABITObject struct {
 ```
 
 <a name="NewABITObject"></a>
-### func [NewABITObject](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L59>)
+### func [NewABITObject](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L58>)
 
 ```go
 func NewABITObject(document *[]byte) (*ABITObject, error)
@@ -355,84 +356,98 @@ if err == nil {
 ```
 
 <a name="ABITObject.GetArray"></a>
-### func \(\*ABITObject\) [GetArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L363>)
+### func \(\*ABITObject\) [GetArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L346>)
 
 ```go
-func (t *ABITObject) GetArray(key string) (*ABITArray, error)
+func (t *ABITObject) GetArray(key string) *ABITArray
 ```
 
 GetArray fetches array assosiated with key.
 
-Returns error if value associated with key is not an array
+#### Requirements
+
+- value associated with key is an array
 
 <a name="ABITObject.GetBlob"></a>
-### func \(\*ABITObject\) [GetBlob](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L333>)
+### func \(\*ABITObject\) [GetBlob](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L320>)
 
 ```go
-func (t *ABITObject) GetBlob(key string) (*[]byte, error)
+func (t *ABITObject) GetBlob(key string) *[]byte
 ```
 
 GetBlob fetches blob assosiated with key.
 
-Returns error if value associated with key is not a blob
+#### Requirements
+
+- value associated with key is a blob
 
 <a name="ABITObject.GetBool"></a>
-### func \(\*ABITObject\) [GetBool](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L303>)
+### func \(\*ABITObject\) [GetBool](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L294>)
 
 ```go
-func (t *ABITObject) GetBool(key string) (bool, error)
+func (t *ABITObject) GetBool(key string) bool
 ```
 
 GetBool fetches bool assosiated with key.
 
-Returns error if value associated with key is not a bool
+#### Requirements
+
+- value associated with key is a boolean
 
 <a name="ABITObject.GetInteger"></a>
-### func \(\*ABITObject\) [GetInteger](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L318>)
+### func \(\*ABITObject\) [GetInteger](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L307>)
 
 ```go
-func (t *ABITObject) GetInteger(key string) (int64, error)
+func (t *ABITObject) GetInteger(key string) int64
 ```
 
 GetInteger fetches integer assosiated with key.
 
-Returns error if value associated with key is not an integer
+#### Requirements
+
+- value associated with key is an integer
 
 <a name="ABITObject.GetNull"></a>
-### func \(\*ABITObject\) [GetNull](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L288>)
+### func \(\*ABITObject\) [GetNull](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L281>)
 
 ```go
-func (t *ABITObject) GetNull(key string) (Null, error)
+func (t *ABITObject) GetNull(key string) Null
 ```
 
 GetNull fetches abit.Null assosiated with key.
 
-Returns error if value associated with key is not an abit.Null
+#### Requirements
+
+- value associated with key is null
 
 <a name="ABITObject.GetString"></a>
-### func \(\*ABITObject\) [GetString](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L348>)
+### func \(\*ABITObject\) [GetString](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L333>)
 
 ```go
-func (t *ABITObject) GetString(key string) (*string, error)
+func (t *ABITObject) GetString(key string) *string
 ```
 
 GetString fetches string assosiated with key.
 
-Returns error if value associated with key is not a string
+#### Requirements
+
+- value associated with key is a string
 
 <a name="ABITObject.GetTree"></a>
-### func \(\*ABITObject\) [GetTree](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L378>)
+### func \(\*ABITObject\) [GetTree](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L359>)
 
 ```go
-func (t *ABITObject) GetTree(key string) (*ABITObject, error)
+func (t *ABITObject) GetTree(key string) *ABITObject
 ```
 
 GetTree fetches tree assosiated with key.
 
-Returns error if value associated with key is not a tree
+#### Requirements
+
+- value associated with key is a tree
 
 <a name="ABITObject.Keys"></a>
-### func \(\*ABITObject\) [Keys](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L196>)
+### func \(\*ABITObject\) [Keys](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L189>)
 
 ```go
 func (t *ABITObject) Keys() []string
@@ -450,10 +465,10 @@ for i, key := range keys {
 ```
 
 <a name="ABITObject.Put"></a>
-### func \(\*ABITObject\) [Put](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L93>)
+### func \(\*ABITObject\) [Put](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L90>)
 
 ```go
-func (t *ABITObject) Put(key string, value interface{}) error
+func (t *ABITObject) Put(key string, value interface{})
 ```
 
 Put adds a value to the corresponding key in the ABIT object.
@@ -463,10 +478,8 @@ Put adds a value to the corresponding key in the ABIT object.
 - key must be less than or equal to 256 bytes when encoded with UTF\-8, but also more than or equal to 1 byte.
 - value can be of types: abit.Null, bool, int64, \[\]byte, string, ABITArray, ABITObject
 
-error if key is invalid or value is of invalid type, otherwise nil.
-
 <a name="ABITObject.Remove"></a>
-### func \(\*ABITObject\) [Remove](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L219>)
+### func \(\*ABITObject\) [Remove](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L212>)
 
 ```go
 func (t *ABITObject) Remove(key string)
@@ -475,18 +488,16 @@ func (t *ABITObject) Remove(key string)
 Remove the key and its associated value from the ABITObject.
 
 <a name="ABITObject.ToByteArray"></a>
-### func \(\*ABITObject\) [ToByteArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L660>)
+### func \(\*ABITObject\) [ToByteArray](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L607>)
 
 ```go
-func (t *ABITObject) ToByteArray() ([]byte, error)
+func (t *ABITObject) ToByteArray() []byte
 ```
 
 ToByteArray converts the ABITObject to a binary document in abit format.
 
-Returns error if the tree contains invalid objects.
-
 <a name="Null"></a>
-## type [Null](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L36>)
+## type [Null](<https://github.com/deepslateorg/abit-go/blob/master/abit.go#L35>)
 
 Null is a helper object to represent null values in abit.
 
