@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"strings"
 	"testing"
+
+	"github.com/multiformats/go-multibase"
 )
 
 // Helper function to check if a function panics
@@ -462,5 +464,44 @@ func TestLexicon(t *testing.T) {
 		if (&lex).Matches(tree) {
 			t.Fatalf("match when shouldn't")
 		}
+	}
+}
+
+func TestConvertionToJson(t *testing.T) {
+	tree, _ := NewABITObject(&[]byte{})
+
+	tree.Put("null obj", Null{})
+	tree.Put("boolean t obj", true)
+	tree.Put("boolean f obj", false)
+	tree.Put("integer p big", int64(69696969420))
+	tree.Put("integer n big", int64(-69696969420))
+	tree.Put("integer p small", int64(69))
+	tree.Put("integer n small", int64(-69))
+
+	blobs := []byte{0, 1, 2, 3, 4, 5, 6, 7}
+	_, blobb, _ := multibase.Decode("z4YJbaPkw5uDwGtEQ3NMvau2EngLQFjmuR8ewchb6xN7LxqBNennqsyE6kR1Xes3azGBZ8HV6KL9A1mMcnP64XvmJCd5JXaXEUaaMGimjaccSSUvLEKCAWrGPqagiSihrqKE6mYyUDgKLfv8yqbNwHoXqi1AFxyCxX6AfaNiRDYAL9z7jcb965rurAFxBHoyWksFL7bQGm1zPuw43Y7JouByY7Y7pFtm374g5gPPGetVbfgsiqvvL7oqJ68vSwwFXDqeJ5Z1uNdu5hVs9qBQMEuaLQ8qjyhjjBnfcQRWvtgqcQnsunfheDpaqmRi9Cx39wBMgJQ44R8R8mZz3UGWvHqmgknHuBWMkXEkHBmJD754gfSqHuGTvNtWtPbgm212QvTeLiiCCn28EH7d2WSGkqQJHc1fhc6ebUwQWw1xTNtjdvSX7shrB4ErNTBDvuAfx2Buaicw5ngUNpWVYqzcdrDND6MkXL1vrcW67tAa1rqQZnacrfydAgBJVcPPKBLW6YF2LUdijAyvZA9rDaHmWXTMwwygx68UFpjZED23noHdVBAcuHts4AwGt4WenVQYC8ffcJSrXrqsB32gyTRj7mvQ14rDjEAYcfYnSmmqFJ114dVV51quZxLuMnUwy4nEZFq7K8UYQkAxN9XS2H8KSHdpX6BLLHRHvoL4X77vcovSEWV4qPn3fJsg8Jvn8kPUaE4LrpGpaE6oTgem5q6mvZ7zsMbP1NA1bKzV4RSKQNrimLtJPzWREJWymk9e54Jk3qTWdJjXrLRP3oWYtyQ4X9nr8moGMvySAsJZccAN3n6L3242LScHBBAEYzwHbjCVCxJwYMVTppxZ4ZxP6JUzupPwwFv4vDRotz8xpswmJgQzCUA1VNmDYQQE5tHQQTPQac5X1ndvJKrijSsdEk7E3v7RV9NiWDeCSdQLKhbUNnhTJNXsqABEPfGaZZ28bGzSCATZSz9mKsp75WN1QNu43MGVmnnjsVYmNnFZ71cam7S1BdeRsogDi2ThYTPumz5wpa5RQXXjaWMFJ3zKmdeRY19on5LuZHnrW4zVeyNznJZ1pWTzfXzbCwPAWs71RDv1BgAzgjgVdvFTH6RsnA1gP1xXHVSRWupYZeGPieDCsDLegNMm2459rA4k6xKoo4mk9z3bXH7sbEbFWFpJkKwYMLTG6fzX2bncJitpgSTyHkEa1dEoQPDDujcKFUCJ7fDbPRrde9NPuwQpcdeWxv4xFQWbeWBPDDoGHqbpyLzhDKVSr4MB9mbd34ZyQZUnh7XH2KuGVdS93kyo7o7SnDVLC3SnXvvX7Lq1uhMJQcRugMPbfBdg9z9MDfYFP933binE8YgV1GeA9TZPRWRFg9CUVRCKXhg2VqhcGSFCUyELukU8rNc3raooQjMA")
+
+	tree.Put("small blob obj", blobs)
+	tree.Put("big blob obj", blobb)
+	tree.Put("string small", "Hello 💀")
+	tree.Put("string big", "Lorem ipsum dolor sit 💺🧘‍♂️ amet, consectetur adipiscing elit, sed do 👌 eiusmod tempor incididunt ut 🅱️🤫 labore et 🎻📯🎺 dolore magna aliqua. Ut 🅱️🤫 enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut 🅱️🤫 aliquip ex 🎻🎻🎻🎻🎻🎻 ea commodo consequat. Duis aute irure dolor in 😩 reprehenderit in 🍝🥫 voluptate velit esse cillum dolore eu 🤲 fugiat nulla pariatur. Excepteur sint occaecat cupidatat non ❌ proident, sunt in 😩😂 culpa qui officia deserunt mollit anim id 😗 est ⏩💆👷🏿 laborum.")
+	arr := NewABITArray()
+	arr.Add("1")
+	arr.Add(int64(2))
+	arr.Add(true)
+	arr.Add(int64(4))
+	arr.Add(int64(3))
+	arr.Add("2")
+	arr.Add(int64(1))
+	tree.Put("array obj", *arr)
+	nestedTree, _ := NewABITObject(&[]byte{})
+	nestedTree.Put("thing", "AMOGUS")
+	tree.Put("nesty", *nestedTree)
+	tree.Put("a very very very very very very very very very very very very very  very very very very very very very very very very very very very  very very very very very very very very very very very very very  very very very very very very very very very ve long key", "meow")
+
+	c := `{"nesty":{"thing":"AMOGUS"},"null obj":null,"array obj":["1",2,true,4,3,"2",1],"string big":"Lorem ipsum dolor sit 💺🧘‍♂️ amet, consectetur adipiscing elit, sed do 👌 eiusmod tempor incididunt ut 🅱️🤫 labore et 🎻📯🎺 dolore magna aliqua. Ut 🅱️🤫 enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut 🅱️🤫 aliquip ex 🎻🎻🎻🎻🎻🎻 ea commodo consequat. Duis aute irure dolor in 😩 reprehenderit in 🍝🥫 voluptate velit esse cillum dolore eu 🤲 fugiat nulla pariatur. Excepteur sint occaecat cupidatat non ❌ proident, sunt in 😩😂 culpa qui officia deserunt mollit anim id 😗 est ⏩💆👷🏿 laborum.","big blob obj_b":"z4YJbaPkw5uDwGtEQ3NMvau2EngLQFjmuR8ewchb6xN7LxqBNennqsyE6kR1Xes3azGBZ8HV6KL9A1mMcnP64XvmJCd5JXaXEUaaMGimjaccSSUvLEKCAWrGPqagiSihrqKE6mYyUDgKLfv8yqbNwHoXqi1AFxyCxX6AfaNiRDYAL9z7jcb965rurAFxBHoyWksFL7bQGm1zPuw43Y7JouByY7Y7pFtm374g5gPPGetVbfgsiqvvL7oqJ68vSwwFXDqeJ5Z1uNdu5hVs9qBQMEuaLQ8qjyhjjBnfcQRWvtgqcQnsunfheDpaqmRi9Cx39wBMgJQ44R8R8mZz3UGWvHqmgknHuBWMkXEkHBmJD754gfSqHuGTvNtWtPbgm212QvTeLiiCCn28EH7d2WSGkqQJHc1fhc6ebUwQWw1xTNtjdvSX7shrB4ErNTBDvuAfx2Buaicw5ngUNpWVYqzcdrDND6MkXL1vrcW67tAa1rqQZnacrfydAgBJVcPPKBLW6YF2LUdijAyvZA9rDaHmWXTMwwygx68UFpjZED23noHdVBAcuHts4AwGt4WenVQYC8ffcJSrXrqsB32gyTRj7mvQ14rDjEAYcfYnSmmqFJ114dVV51quZxLuMnUwy4nEZFq7K8UYQkAxN9XS2H8KSHdpX6BLLHRHvoL4X77vcovSEWV4qPn3fJsg8Jvn8kPUaE4LrpGpaE6oTgem5q6mvZ7zsMbP1NA1bKzV4RSKQNrimLtJPzWREJWymk9e54Jk3qTWdJjXrLRP3oWYtyQ4X9nr8moGMvySAsJZccAN3n6L3242LScHBBAEYzwHbjCVCxJwYMVTppxZ4ZxP6JUzupPwwFv4vDRotz8xpswmJgQzCUA1VNmDYQQE5tHQQTPQac5X1ndvJKrijSsdEk7E3v7RV9NiWDeCSdQLKhbUNnhTJNXsqABEPfGaZZ28bGzSCATZSz9mKsp75WN1QNu43MGVmnnjsVYmNnFZ71cam7S1BdeRsogDi2ThYTPumz5wpa5RQXXjaWMFJ3zKmdeRY19on5LuZHnrW4zVeyNznJZ1pWTzfXzbCwPAWs71RDv1BgAzgjgVdvFTH6RsnA1gP1xXHVSRWupYZeGPieDCsDLegNMm2459rA4k6xKoo4mk9z3bXH7sbEbFWFpJkKwYMLTG6fzX2bncJitpgSTyHkEa1dEoQPDDujcKFUCJ7fDbPRrde9NPuwQpcdeWxv4xFQWbeWBPDDoGHqbpyLzhDKVSr4MB9mbd34ZyQZUnh7XH2KuGVdS93kyo7o7SnDVLC3SnXvvX7Lq1uhMJQcRugMPbfBdg9z9MDfYFP933binE8YgV1GeA9TZPRWRFg9CUVRCKXhg2VqhcGSFCUyELukU8rNc3raooQjMA","string small":"Hello 💀","boolean f obj":false,"boolean t obj":true,"integer n big":-69696969420,"integer p big":69696969420,"small blob obj_b":"z13DUyZY2dc","integer n small":-69,"integer p small":69,"a very very very very very very very very very very very very very  very very very very very very very very very very very very very  very very very very very very very very very very very very very  very very very very very very very very very ve long key":"meow"}`
+
+	if c != tree.ToJson() {
+		t.Fatal("incorrectly converted abit to json")
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/multiformats/go-multibase"
 )
 
 // ABITObject is used to store ABIT trees.
@@ -1123,4 +1125,93 @@ func matchArray(a *ABITObject, b *ABITObject) bool {
 	}
 
 	return true
+}
+
+func (a *ABITObject) ToJson() string {
+	if a.dataType != 0b0110 {
+		panic("ABITObject of invalid type for this function")
+	}
+
+	keys := make([]string, 0, len(a.tree))
+	for k := range a.tree {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		if len(keys[i]) == len(keys[j]) {
+			// If lengths are equal, sort lexicographically
+			return keys[i] < keys[j]
+		}
+		// Otherwise, sort by length
+		return len(keys[i]) < len(keys[j])
+	})
+
+	var out string = "{"
+	for _, key := range keys {
+		safeKey, err := json.Marshal(key)
+		if err != nil {
+			panic(err.Error())
+		}
+		safeKeyString := string(safeKey)
+		switch a.tree[key].dataType {
+		case 0b0000:
+			out += fmt.Sprintf("%s:null,", safeKeyString)
+		case 0b0001:
+			out += fmt.Sprintf("%s:%t,", safeKeyString, a.tree[key].boolean)
+		case 0b0010:
+			out += fmt.Sprintf("%s:%d,", safeKeyString, a.tree[key].integer)
+		case 0b0011:
+			blobString, err := multibase.Encode(multibase.Base58BTC, *a.tree[key].blob)
+			if err != nil {
+				panic(err.Error())
+			}
+			out += fmt.Sprintf("%s:\"%s\",", safeKeyString[:len(safeKeyString)-1]+"_b\"", blobString)
+		case 0b0100:
+			safeString, err := json.Marshal(a.tree[key].text)
+			if err != nil {
+				panic(err.Error())
+			}
+			//out += fmt.Sprintf("%s:%s,", safeKeyString, strings.ReplaceAll(string(safeString), "\n", "\\n"))
+			out += fmt.Sprintf("%s:%s,", safeKeyString, string(safeString))
+		case 0b0101:
+			out += fmt.Sprintf("%s:%s,", safeKeyString, a.tree[key].array.toJsonArray())
+		case 0b0110:
+			out += fmt.Sprintf("%s:%s,", safeKeyString, a.tree[key].ToJson())
+		}
+	}
+
+	return out[:len(out)-1] + "}"
+}
+
+func (a *ABITArray) toJsonArray() string {
+	var out string = "["
+	for _, obj := range a.array {
+		switch obj.dataType {
+		case 0b0000:
+			out += "null,"
+		case 0b0001:
+			out += fmt.Sprintf("%t,", obj.boolean)
+		case 0b0010:
+			out += fmt.Sprintf("%d,", obj.integer)
+		case 0b0011:
+			blobString, err := multibase.Encode(multibase.Base58BTC, *obj.blob)
+			if err != nil {
+				panic(err.Error())
+			}
+			out += fmt.Sprintf("\"%s\",", blobString)
+		case 0b0100:
+			safeString, err := json.Marshal(obj.text)
+			if err != nil {
+				panic(err.Error())
+			}
+			//out += fmt.Sprintf("%s,", strings.ReplaceAll(string(safeString), "\n", "\\n"))
+			out += fmt.Sprintf("%s,", string(safeString))
+		case 0b0101:
+			out += fmt.Sprintf("%s,", obj.array.toJsonArray())
+		case 0b0110:
+			out += fmt.Sprintf("%s,", obj.ToJson())
+		}
+	}
+
+	return out[:len(out)-1] + "]"
 }
